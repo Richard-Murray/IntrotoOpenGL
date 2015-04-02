@@ -1,0 +1,5 @@
+IntrotoOpenGL/dep/glm/doc/
+IntrotoOpenGL/dep/glfw/docs/
+IntrotoOpenGL/dep/stb-master/tests/
+IntrotoOpenGL/dep/glm/test/
+FBXLoader*.lib
