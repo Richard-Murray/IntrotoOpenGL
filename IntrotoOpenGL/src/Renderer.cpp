@@ -94,7 +94,7 @@ void Renderer::Update(float deltaTime)
 void Renderer::Draw()
 {
 	////Regular drawing
-	/*m_pLightingRenderTarget->SetAsActiveRenderTarget();
+	m_pLightingRenderTarget->SetAsActiveRenderTarget();
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	DrawLighting(m_targetCamera);
@@ -122,42 +122,42 @@ void Renderer::Draw()
 	glBindVertexArray(m_VAOplane);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-	DrawScene(m_camera);*/
+	DrawScene(m_camera);
 
 	////Deferred rendering drawing
 
 	////Post process drawing
-	// bind our target
-	glBindFramebuffer(GL_FRAMEBUFFER, m_pPostProcessRenderTarget->GetFBO());
-	glViewport(0, 0, 1280, 720);
+	//// bind our target
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_pPostProcessRenderTarget->GetFBO());
+	//glViewport(0, 0, 1280, 720);
 
-	// clear the target
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//// clear the target
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// draw our 3D scene
-	DrawScene(m_camera);
-	// gizmos for now
-	Gizmos::draw(m_camera->GetProjectionView());
+	//// draw our 3D scene
+	//DrawScene(m_camera);
+	//// gizmos for now
+	//Gizmos::draw(m_camera->GetProjectionView());
 
-	// bind the back-buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, 1280, 720);
+	//// bind the back-buffer
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glViewport(0, 0, 1280, 720);
 
-	// just clear the back-buffer depth as
-	// each pixel will be filled
-	glClear(GL_DEPTH_BUFFER_BIT);
+	//// just clear the back-buffer depth as
+	//// each pixel will be filled
+	//glClear(GL_DEPTH_BUFFER_BIT);
 
-	// draw out full-screen quad
-	glUseProgram(m_programPostProcessID);
+	//// draw out full-screen quad
+	//glUseProgram(m_programPostProcessID);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_pPostProcessRenderTarget->GetRenderTexture(0));
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_pPostProcessRenderTarget->GetRenderTexture(0));
 
-	int loc = glGetUniformLocation(m_programPostProcessID, "target");
-	glUniform1i(loc, 0);
+	//int loc = glGetUniformLocation(m_programPostProcessID, "target");
+	//glUniform1i(loc, 0);
 
-	glBindVertexArray(m_VAOfullScreenQuad);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	//glBindVertexArray(m_VAOfullScreenQuad);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
 
 }
 
@@ -531,7 +531,7 @@ void Renderer::Load()
 	//shadow maps
 	//----------
 	m_FBXBunny = new FBXFile();
-	m_FBXBunny->load("./data/models/Cube.fbx");
+	m_FBXBunny->load("./data/models/Bunny.fbx");
 //	m_FBXBunny->initialiseOpenGLTextures();
 	CreateOpenGLBuffers(m_FBXBunny);
 	
