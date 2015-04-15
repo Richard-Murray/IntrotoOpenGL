@@ -12,6 +12,7 @@
 #include <stb_image.h>
 #include "tiny_obj_loader.h"
 #include "FBXFile.h"
+#include "AntTweakBar.h"
 
 #include "Particles.h"
 #include "MeshArray.h"
@@ -147,9 +148,33 @@ private:
 	void CreateFullScreenQuad();
 	unsigned int m_VAOfullScreenQuad;
 
+	//GUI
+	TwBar* m_tweakBar;
+
 	//ignore these
 	void CreatePostProcessFramebuffer();
 	unsigned int m_FBOPostProcess;
+
+	void OnMouseButton(GLFWwindow*, int b, int a, int m) {
+		TwEventMouseButtonGLFW(b, a);
+	}
+	void OnMousePosition(GLFWwindow*, double x, double y) {
+		TwEventMousePosGLFW((int)x, (int)y);
+	}
+	void OnMouseScroll(GLFWwindow*, double x, double y) {
+		TwEventMouseWheelGLFW((int)y);
+	}
+	void OnKey(GLFWwindow*, int k, int s, int a, int m) {
+		TwEventKeyGLFW(k, a);
+	}
+	void OnChar(GLFWwindow*, unsigned int c) {
+		TwEventCharGLFW(c, GLFW_PRESS);
+	}
+	void OnWindowResize(GLFWwindow*, int w, int h) {
+		TwWindowSize(w, h);
+		glViewport(0, 0, w, h);
+	}
+
 };
 
 

@@ -53,13 +53,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;GLM_SWIZZLE;GLM_FORCE_PURE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)dep/glfw/include;$(ProjectDir)dep/glm;$(ProjectDir)dep/stb-master;$(ProjectDir)dep/FBXLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)dep/glfw/include;$(ProjectDir)dep/glm;$(ProjectDir)dep/stb-master;$(ProjectDir)dep/FBXLoader;$(ProjectDir)dep/AntTweakBar/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)dep/glfw/lib-vc2012;$(ProjectDir)dep/glm;$(ProjectDir)dep/stb-master;$(ProjectDir)dep/FBXLoader;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;FBXLoader_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)dep/glfw/lib-vc2012;$(ProjectDir)dep/glm;$(ProjectDir)dep/stb-master;$(ProjectDir)dep/FBXLoader;$(ProjectDir)dep/AntTweakBar/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;FBXLoader_d.lib;AntTweakBar.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

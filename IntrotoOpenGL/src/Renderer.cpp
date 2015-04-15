@@ -556,6 +556,19 @@ void Renderer::Load()
 	CreateDeferredRenderingBuffers();
 
 	//----------
+
+	//GUI
+	//----------
+	TwInit(TW_OPENGL_CORE, nullptr);
+	TwWindowSize(1280, 720);
+
+	/*glfwSetMouseButtonCallback(m_window, OnMouseButton);
+	glfwSetCursorPosCallback(m_window, OnMousePosition);
+	glfwSetScrollCallback(m_window, OnMouseScroll);
+	glfwSetKeyCallback(m_window, OnKey);
+	glfwSetCharCallback(m_window, OnChar);
+	glfwSetWindowSizeCallback(m_window, OnWindowResize);*/
+	//----------
 }
 
 unsigned int Renderer::LoadShader(unsigned int type, const char* path)
