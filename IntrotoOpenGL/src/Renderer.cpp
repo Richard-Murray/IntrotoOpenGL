@@ -562,12 +562,19 @@ void Renderer::Load()
 	TwInit(TW_OPENGL_CORE, nullptr);
 	TwWindowSize(1280, 720);
 
-	/*glfwSetMouseButtonCallback(m_window, OnMouseButton);
+	glfwSetMouseButtonCallback(m_window, OnMouseButton);
 	glfwSetCursorPosCallback(m_window, OnMousePosition);
 	glfwSetScrollCallback(m_window, OnMouseScroll);
 	glfwSetKeyCallback(m_window, OnKey);
 	glfwSetCharCallback(m_window, OnChar);
-	glfwSetWindowSizeCallback(m_window, OnWindowResize);*/
+	glfwSetWindowSizeCallback(m_window, OnWindowResize);
+
+	//----------
+
+	//Procedural gen
+	//----------
+	GenerateProceduralPlane();
+	
 	//----------
 }
 
@@ -868,4 +875,55 @@ void Renderer::GenerateTexturePlaneAlt()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	m_VAOplane = m_VAO;
+}
+
+void Renderer::GenerateProceduralPlane()
+{
+	//m_proceduralVAO
+
+	/*glGenVertexArrays(1, &m_VAO);
+	glBindVertexArray(m_VAO);
+
+	glGenBuffers(1, &m_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexAdv) * 4, vertexData, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, indexData, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 48);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 16);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 32);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	m_proceduralVAO = m_VAO;*/
+
+	int dims = 64;
+	m_perlinData = new float[dims * dims];
+
+	for (int x = 0; x < 64; ++x)
+	{
+		for (int y = 0; y < 64; ++y)
+		{
+			m_perlinData[y * dims + x] = glm::perlin(glm::vec2(x, y) * 10) * 0.5f + 0.5f;
+		}
+	}
+
+	glGenTextures(1, &m_perlinTexture);
+	glBindTexture(GL_TEXTURE_2D, m_perlinTexture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 64, 64, 0, GL_RED, GL_FLOAT, m_perlinData);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }

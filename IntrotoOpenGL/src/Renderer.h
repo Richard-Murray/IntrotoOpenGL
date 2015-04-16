@@ -151,26 +151,32 @@ private:
 	//GUI
 	TwBar* m_tweakBar;
 
+	//Procedural generation
+	void GenerateProceduralPlane();
+	float *m_perlinData;
+	unsigned int m_perlinTexture;
+	unsigned int m_proceduralVAO;
+
 	//ignore these
 	void CreatePostProcessFramebuffer();
 	unsigned int m_FBOPostProcess;
 
-	void OnMouseButton(GLFWwindow*, int b, int a, int m) {
+	static void OnMouseButton(GLFWwindow*, int b, int a, int m) {
 		TwEventMouseButtonGLFW(b, a);
 	}
-	void OnMousePosition(GLFWwindow*, double x, double y) {
+	static void OnMousePosition(GLFWwindow*, double x, double y) {
 		TwEventMousePosGLFW((int)x, (int)y);
 	}
-	void OnMouseScroll(GLFWwindow*, double x, double y) {
+	static void OnMouseScroll(GLFWwindow*, double x, double y) {
 		TwEventMouseWheelGLFW((int)y);
 	}
-	void OnKey(GLFWwindow*, int k, int s, int a, int m) {
+	static void OnKey(GLFWwindow*, int k, int s, int a, int m) {
 		TwEventKeyGLFW(k, a);
 	}
-	void OnChar(GLFWwindow*, unsigned int c) {
+	static void OnChar(GLFWwindow*, unsigned int c) {
 		TwEventCharGLFW(c, GLFW_PRESS);
 	}
-	void OnWindowResize(GLFWwindow*, int w, int h) {
+	static void OnWindowResize(GLFWwindow*, int w, int h) {
 		TwWindowSize(w, h);
 		glViewport(0, 0, w, h);
 	}
