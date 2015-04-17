@@ -12,6 +12,15 @@ public:
 	glm::vec3 normal;
 };
 
+struct VertexUVs
+{
+public:
+	glm::vec4 position;
+	glm::vec4 colour;
+	glm::vec3 normal;
+	glm::vec2 UV;
+};
+
 struct VertexAdv
 {
 	float x, y, z, w;

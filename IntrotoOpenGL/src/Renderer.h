@@ -38,6 +38,9 @@ public:
 
 	unsigned int LoadShader(unsigned int type, const char* path);
 	void CreateShader(unsigned int &shader, const char* vert, const char* frag);
+	void CreateShader(unsigned int &shader, const char* vert, const char* geom, const char* frag);
+
+	void LoadTexture(unsigned int &texture, const char* path);
 
 	void CreateTextureShader();
 	void CreateObjShader();
@@ -61,6 +64,8 @@ private:
 	unsigned int m_programCompositeID;
 
 	unsigned int m_programPostProcessID;
+
+	unsigned int m_programTerrainID;
 
 	unsigned int m_VAO;
 	unsigned int m_VBO;
@@ -150,12 +155,23 @@ private:
 
 	//GUI
 	TwBar* m_tweakBar;
+	bool m_hideObjects;
+	bool m_toResetTerrain;
 
 	//Procedural generation
 	void GenerateProceduralPlane();
+	void ResetProceduralPlane();
 	float *m_perlinData;
 	unsigned int m_perlinTexture;
 	unsigned int m_proceduralVAO;
+
+	unsigned int m_grassTexture;
+	unsigned int m_rockTexture;
+	unsigned int m_snowTexture;
+
+	glm::vec3 m_terrainLightDirection;
+
+	float m_seed;
 
 	//ignore these
 	void CreatePostProcessFramebuffer();

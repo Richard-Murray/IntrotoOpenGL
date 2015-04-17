@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+using glm::vec2;
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
@@ -12,6 +13,9 @@ Renderer::Renderer(FlyCamera* camera, GLFWwindow* window)
 
 Renderer::~Renderer()
 {
+	TwDeleteAllBars();
+	TwTerminate();
+
 	delete m_targetCamera;
 
 	delete m_pLightingRenderTarget;
@@ -19,8 +23,7 @@ Renderer::~Renderer()
 
 	delete m_FBX;
 	delete m_gpuParticleEmitter;
-
-
+	
 	glDeleteProgram(m_programObjID);
 	glDeleteProgram(m_programTexturePlaneID);
 
@@ -89,6 +92,12 @@ void Renderer::Update(float deltaTime)
 	{
 		m_targetCamera->SetTransform(m_camera->GetTransform());
 	}
+
+	if (m_toResetTerrain == true)
+	{
+		ResetProceduralPlane();
+		m_toResetTerrain = false;
+	}
 }
 
 void Renderer::Draw()
@@ -123,6 +132,8 @@ void Renderer::Draw()
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	DrawScene(m_camera);
+
+	TwDraw();
 
 	////Deferred rendering drawing
 
@@ -185,139 +196,186 @@ void Renderer::DrawScene(BaseCamera* camera)
 {
 	//REGULAR DRAWING
 
-	
-	//Shadowing stuff
-	//----------
-	glUseProgram(m_programShadowMeshID);
+	int loc;
 
-	//bind the camera
-	int loc = glGetUniformLocation(m_programShadowMeshID, "ProjectionView");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
-
-	//bind light matrix
-	glm::mat4 textureSpaceOffset(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, 0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.5f, 0.0f,
-		0.5f, 0.5f, 0.5f, 1.0f);
-
-	glm::mat4 lightMatrix = textureSpaceOffset * m_lightMatrix;
-
-	float shadowBias = 0.01f;
-
-	loc = glGetUniformLocation(m_programShadowMeshID, "LightMatrix");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, &(lightMatrix[0][0]));
-
-	loc = glGetUniformLocation(m_programShadowMeshID, "LightDir");
-	glUniform3fv(loc, 1, &m_lightDir[0]);
-
-	loc = glGetUniformLocation(m_programShadowMeshID, "shadowMap");
-	glUniform1i(loc, 0);
-
-	loc = glGetUniformLocation(m_programShadowMeshID, "shadowBias");
-	glUniform1f(loc, shadowBias);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_pLightingRenderTarget->GetDepthTexture());
-
-	//draw all shadow-recieving
-	for (unsigned int i = 0; i < m_FBXBunny->getMeshCount(); ++i)
+	if (m_hideObjects == false)
 	{
-		FBXMeshNode* mesh = m_FBXBunny->getMeshByIndex(i);
-
-		unsigned int* glData = (unsigned int*)mesh->m_userData;
-
-		glBindVertexArray(glData[0]);
-		glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
-	}
 
 
-	//----------
+		//Shadowing stuff
+		//----------
+		glUseProgram(m_programShadowMeshID);
 
+		//bind the camera
+		loc = glGetUniformLocation(m_programShadowMeshID, "ProjectionView");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
 
-	//Hardcoded test values
-	vec3 lightDirection = vec3(-0.5f, 0.5f/*glfwGetTime() * 0.1f*/, 0.5f);
-	vec3 lightColour = vec3(1.0f, 0.7f, 0.0f);
-	float specularPower = 1.0f;
-	FBXSkeleton* skeleton = m_FBX->getSkeletonByIndex(0);
-	skeleton->updateBones();
-	
-	glUseProgram(m_programObjID);
-	unsigned int viewProjectionUniform = glGetUniformLocation(m_programObjID, "ProjectionView");
-	unsigned int lightDirectionUniform = glGetUniformLocation(m_programObjID, "LightDirection");
-	unsigned int lightColourUniform = glGetUniformLocation(m_programObjID, "LightColour");
-	unsigned int cameraPositionUniform = glGetUniformLocation(m_programObjID, "CameraPosition");
-	unsigned int specularPowerUniform = glGetUniformLocation(m_programObjID, "SpecularPower");
-	unsigned int bonesUniform = glGetUniformLocation(m_programObjID, "Bones");
-	
-	glUniformMatrix4fv(viewProjectionUniform, 1, GL_FALSE, glm::value_ptr(camera->GetProjectionView()));
-	glUniform3fv(lightDirectionUniform, 1, glm::value_ptr(lightDirection));
-	glUniform3fv(lightColourUniform, 1, glm::value_ptr(lightColour));
-	glUniform3fv(cameraPositionUniform, 1, glm::value_ptr(camera->GetPosition()));
-	glUniform1f(specularPowerUniform, specularPower);
-	glUniformMatrix4fv(bonesUniform, skeleton->m_boneCount, GL_FALSE, (float*)skeleton->m_bones);
-	
-	int iDiffuseLoc = glGetUniformLocation(m_programObjID, "Diffuse");
-	glUniform1i(iDiffuseLoc, 0);
-	
-	for (unsigned int i = 0; i < m_FBX->getMeshCount(); ++i)
-	{
-		FBXMeshNode* mesh = m_FBX->getMeshByIndex(i);
-	
-		unsigned int* glData = (unsigned int*)mesh->m_userData;
-	
+		//bind light matrix
+		glm::mat4 textureSpaceOffset(
+			0.5f, 0.0f, 0.0f, 0.0f,
+			0.0f, 0.5f, 0.0f, 0.0f,
+			0.0f, 0.0f, 0.5f, 0.0f,
+			0.5f, 0.5f, 0.5f, 1.0f);
+
+		glm::mat4 lightMatrix = textureSpaceOffset * m_lightMatrix;
+
+		float shadowBias = 0.01f;
+
+		loc = glGetUniformLocation(m_programShadowMeshID, "LightMatrix");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(lightMatrix[0][0]));
+
+		loc = glGetUniformLocation(m_programShadowMeshID, "LightDir");
+		glUniform3fv(loc, 1, &m_lightDir[0]);
+
+		loc = glGetUniformLocation(m_programShadowMeshID, "shadowMap");
+		glUniform1i(loc, 0);
+
+		loc = glGetUniformLocation(m_programShadowMeshID, "shadowBias");
+		glUniform1f(loc, shadowBias);
+
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mesh->m_material->textures[FBXMaterial::DiffuseTexture]->handle);
-	
-		glBindVertexArray(glData[0]);
-		glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
+		glBindTexture(GL_TEXTURE_2D, m_pLightingRenderTarget->GetDepthTexture());
+
+		//draw all shadow-recieving
+		for (unsigned int i = 0; i < m_FBXBunny->getMeshCount(); ++i)
+		{
+			FBXMeshNode* mesh = m_FBXBunny->getMeshByIndex(i);
+
+			unsigned int* glData = (unsigned int*)mesh->m_userData;
+
+			glBindVertexArray(glData[0]);
+			glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
+		}
+
+
+		//----------
+
+
+		//Hardcoded test values
+		vec3 lightDirection = vec3(-0.5f, 0.5f/*glfwGetTime() * 0.1f*/, 0.5f);
+		vec3 lightColour = vec3(1.0f, 0.7f, 0.0f);
+		float specularPower = 1.0f;
+		FBXSkeleton* skeleton = m_FBX->getSkeletonByIndex(0);
+		skeleton->updateBones();
+
+		glUseProgram(m_programObjID);
+		unsigned int viewProjectionUniform = glGetUniformLocation(m_programObjID, "ProjectionView");
+		unsigned int lightDirectionUniform = glGetUniformLocation(m_programObjID, "LightDirection");
+		unsigned int lightColourUniform = glGetUniformLocation(m_programObjID, "LightColour");
+		unsigned int cameraPositionUniform = glGetUniformLocation(m_programObjID, "CameraPosition");
+		unsigned int specularPowerUniform = glGetUniformLocation(m_programObjID, "SpecularPower");
+		unsigned int bonesUniform = glGetUniformLocation(m_programObjID, "Bones");
+
+		glUniformMatrix4fv(viewProjectionUniform, 1, GL_FALSE, glm::value_ptr(camera->GetProjectionView()));
+		glUniform3fv(lightDirectionUniform, 1, glm::value_ptr(lightDirection));
+		glUniform3fv(lightColourUniform, 1, glm::value_ptr(lightColour));
+		glUniform3fv(cameraPositionUniform, 1, glm::value_ptr(camera->GetPosition()));
+		glUniform1f(specularPowerUniform, specularPower);
+		glUniformMatrix4fv(bonesUniform, skeleton->m_boneCount, GL_FALSE, (float*)skeleton->m_bones);
+
+		int iDiffuseLoc = glGetUniformLocation(m_programObjID, "Diffuse");
+		glUniform1i(iDiffuseLoc, 0);
+
+		for (unsigned int i = 0; i < m_FBX->getMeshCount(); ++i)
+		{
+			FBXMeshNode* mesh = m_FBX->getMeshByIndex(i);
+
+			unsigned int* glData = (unsigned int*)mesh->m_userData;
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, mesh->m_material->textures[FBXMaterial::DiffuseTexture]->handle);
+
+			glBindVertexArray(glData[0]);
+			glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
+		}
+
+		//Textured plane
+		//----------
+		glUseProgram(m_programTexturePlaneID);
+
+		//set texture slots
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_normalMap);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, m_pLightingRenderTarget->GetDepthTexture());
+
+		//bind camera
+		loc = glGetUniformLocation(m_programTexturePlaneID, "ProjectionView");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
+
+		loc = glGetUniformLocation(m_programTexturePlaneID, "LightMatrix");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, &(lightMatrix[0][0]));
+
+		loc = glGetUniformLocation(m_programTexturePlaneID, "shadowMap");
+		glUniform1i(loc, 2);
+
+		loc = glGetUniformLocation(m_programTexturePlaneID, "shadowBias");
+		glUniform1f(loc, shadowBias);
+
+		//tell shader where it is
+		loc = glGetUniformLocation(m_programTexturePlaneID, "diffuse");
+		glUniform1i(loc, 0);
+		loc = glGetUniformLocation(m_programTexturePlaneID, "normal");
+		glUniform1i(loc, 1);
+
+		//bind light
+		vec3 light(m_lightDir);
+		loc = glGetUniformLocation(m_programTexturePlaneID, "LightDirection");
+		glUniform3f(loc, light.x, light.y, light.z);
+
+		//draw
+		glBindVertexArray(m_VAOtest);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		//----------
+
+		m_gpuParticleEmitter->Draw((float)glfwGetTime(), camera->GetTransform(), camera->GetProjectionView());
 	}
 
-	//Textured plane
+	//Procedurally generated plane
 	//----------
-	glUseProgram(m_programTexturePlaneID);
-	
-	//set texture slots
+	glUseProgram(m_programTerrainID);
+
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glBindTexture(GL_TEXTURE_2D, m_perlinTexture);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_normalMap);
+	glBindTexture(GL_TEXTURE_2D, m_grassTexture);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_pLightingRenderTarget->GetDepthTexture());
+	glBindTexture(GL_TEXTURE_2D, m_rockTexture);
 
-	//bind camera
-	loc = glGetUniformLocation(m_programTexturePlaneID, "ProjectionView");
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, m_snowTexture);
+
+	loc = glGetUniformLocation(m_programTerrainID, "view_proj");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
 
-	loc = glGetUniformLocation(m_programTexturePlaneID, "LightMatrix");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, &(lightMatrix[0][0]));
-
-	loc = glGetUniformLocation(m_programTexturePlaneID, "shadowMap");
-	glUniform1i(loc, 2);
-
-	loc = glGetUniformLocation(m_programTexturePlaneID, "shadowBias");
-	glUniform1f(loc, shadowBias);
-
-
-	//tell shader where it is
-	loc = glGetUniformLocation(m_programTexturePlaneID, "diffuse");
+	loc = glGetUniformLocation(m_programTerrainID, "perlin_texture");
 	glUniform1i(loc, 0);
-	loc = glGetUniformLocation(m_programTexturePlaneID, "normal");
+
+	loc = glGetUniformLocation(m_programTerrainID, "grass_texture");
 	glUniform1i(loc, 1);
 
-	//bind light
-	vec3 light(m_lightDir);
-	loc = glGetUniformLocation(m_programTexturePlaneID, "LightDirection");
-	glUniform3f(loc, light.x, light.y, light.z);
+	loc = glGetUniformLocation(m_programTerrainID, "rock_texture");
+	glUniform1i(loc, 2);
 
-	//draw
-	glBindVertexArray(m_VAOtest);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+	loc = glGetUniformLocation(m_programTerrainID, "snow_texture");
+	glUniform1i(loc, 3);
+
+	loc = glGetUniformLocation(m_programTerrainID, "light_direction");
+	glUniform3fv(loc, 1, glm::value_ptr(m_terrainLightDirection));
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glBindVertexArray(m_proceduralVAO);
+	glDrawElements(GL_TRIANGLES, 64 * 64 * 6, GL_UNSIGNED_INT, nullptr);
+
 	//----------
 
-	m_gpuParticleEmitter->Draw((float)glfwGetTime(), camera->GetTransform(), camera->GetProjectionView());
+	
 
 	
 }
@@ -415,7 +473,9 @@ void Renderer::Load()
 	CreateShader(m_programDirectionalLightID, "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
 	CreateShader(m_programCompositeID, "./data/shaders/deferredComposite.vert", "./data/shaders/deferredComposite.frag");
 
-	CreateShader(m_programPostProcessID, "./data/shaders/postProcess.vert", "./data/shaders/postProcess.frag");
+//	CreateShader(m_programPostProcessID, "./data/shaders/postProcess.vert", "./data/shaders/postProcess.frag");
+
+	CreateShader(m_programTerrainID, "./data/shaders/proceduralPlane.vert", "./data/shaders/proceduralPlane.geom", "./data/shaders/proceduralPlane.frag");
 
 	//m_meshArray = new MeshArray();
 	GenerateTexturePlane();
@@ -531,7 +591,7 @@ void Renderer::Load()
 	//shadow maps
 	//----------
 	m_FBXBunny = new FBXFile();
-	m_FBXBunny->load("./data/models/Bunny.fbx");
+	m_FBXBunny->load("./data/models/Cube.fbx");
 //	m_FBXBunny->initialiseOpenGLTextures();
 	CreateOpenGLBuffers(m_FBXBunny);
 	
@@ -569,13 +629,42 @@ void Renderer::Load()
 	glfwSetCharCallback(m_window, OnChar);
 	glfwSetWindowSizeCallback(m_window, OnWindowResize);
 
+	m_tweakBar = TwNewBar("Options");
+	m_hideObjects = false;
+	m_toResetTerrain = false;
+	TwAddVarRW(m_tweakBar, "Show Terrain Only", TW_TYPE_BOOLCPP, &m_hideObjects, "");
+	TwAddVarRW(m_tweakBar, "Reset Terrain", TW_TYPE_BOOLCPP, &m_toResetTerrain, "");
+	TwAddVarRW(m_tweakBar, "Terrain Seed", TW_TYPE_FLOAT, &m_seed, "");
+	TwAddVarRW(m_tweakBar, "Light X", TW_TYPE_FLOAT, &m_terrainLightDirection.x, "");
+	TwAddVarRW(m_tweakBar, "Light Y", TW_TYPE_FLOAT, &m_terrainLightDirection.y, "");
+	TwAddVarRW(m_tweakBar, "Light Z", TW_TYPE_FLOAT, &m_terrainLightDirection.z, "");
+
 	//----------
 
 	//Procedural gen
 	//----------
 	GenerateProceduralPlane();
+
+	LoadTexture(m_grassTexture, "./data/textures/grass.jpg");
+	LoadTexture(m_rockTexture, "./data/textures/rock.jpg");
+	LoadTexture(m_snowTexture, "./data/textures/snow.jpg");
 	
 	//----------
+}
+
+void Renderer::LoadTexture(unsigned int &texture, const char* path)
+{
+	int imageWidth = 0, imageHeight = 0, imageFormat = 0;
+
+	unsigned char* data = stbi_load(path, &imageWidth, &imageHeight, &imageFormat, STBI_default);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	stbi_image_free(data);
 }
 
 unsigned int Renderer::LoadShader(unsigned int type, const char* path)
@@ -630,6 +719,41 @@ void Renderer::CreateShader(unsigned int &shader, const char* vert, const char* 
 
 	glDeleteShader(fs);
 	glDeleteShader(vs);
+}
+
+void Renderer::CreateShader(unsigned int &shader, const char* vert, const char* geom, const char* frag)
+{
+	unsigned int vs = LoadShader(GL_VERTEX_SHADER, vert);
+	unsigned int gs = LoadShader(GL_GEOMETRY_SHADER, geom);
+	unsigned int fs = LoadShader(GL_FRAGMENT_SHADER, frag);
+
+
+	int success = GL_FALSE;
+	//
+	//unsigned int shader;
+
+	shader = glCreateProgram();
+	glAttachShader(shader, vs);
+	glAttachShader(shader, fs);
+	glAttachShader(shader, gs);
+	glLinkProgram(shader);
+
+	glGetProgramiv(shader, GL_LINK_STATUS, &success);
+	if (success == GL_FALSE)
+	{
+		int infoLogLength = 0;
+		glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
+		char* infoLog = new char[infoLogLength];
+
+		glGetProgramInfoLog(shader, infoLogLength, 0, infoLog);
+		printf("Error: Failed to link shader program!\n");
+		printf("%s\n", infoLog);
+		delete[] infoLog;
+	}
+
+	glDeleteShader(fs);
+	glDeleteShader(vs);
+	glDeleteShader(gs);
 }
 
 void Renderer::CreateOpenGLBuffers(FBXFile* fbx)
@@ -837,7 +961,7 @@ void Renderer::GenerateTexturePlane()
 	m_meshArray->AddedMesh();
 	m_meshArray->Iterate();*/
 
-
+	
 
 	//5721
 }
@@ -881,38 +1005,93 @@ void Renderer::GenerateProceduralPlane()
 {
 	//m_proceduralVAO
 
-	/*glGenVertexArrays(1, &m_VAO);
+	const int width = 65;
+	const int height = 65;
+
+	VertexUVs vertexData[width * height];
+
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			vertexData[y * width + x].position = vec4(x * 10, 0, y * 10, 1);
+			vertexData[y * width + x].colour = vec4(0, 0, 0, 1);
+			vertexData[y * width + x].normal = vec3(0, 1, 0);
+			vertexData[y * width + x].UV = vec2((float)x / (width - 1), (float)y / (height - 1));
+		}
+	}
+
+	unsigned int indexData[(width - 1) * (height - 1) * 6];
+
+	for (int y = 0; y < height - 1; y++)
+	{
+		for (int x = 0; x < width - 1; x++)
+		{
+			indexData[(y * (width - 1) + x) * 6] = x + width * y;					//0
+			indexData[(y * (width - 1) + x) * 6 + 1] = x + 1 + width * y;			//1
+			indexData[(y * (width - 1) + x) * 6 + 2] = x + 1 + width * (y + 1);	//2
+			indexData[(y * (width - 1) + x) * 6 + 3] = x + width * y;				//0
+			indexData[(y * (width - 1) + x) * 6 + 4] = x + 1 + width * (y + 1);	//2
+			indexData[(y * (width - 1) + x) * 6 + 5] = x + width * (y + 1);		//3
+		}
+	}
+
+	glGenVertexArrays(1, &m_VAO);
 	glBindVertexArray(m_VAO);
 
 	glGenBuffers(1, &m_VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexAdv) * 4, vertexData, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexUVs) * width * height, vertexData, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &m_IBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, indexData, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6 * (width - 1) * (height - 1), indexData, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0));
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 48);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 16);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 32);
+	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VertexUVs), ((char*)0));
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(VertexUVs), ((char*)0) + 16);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(VertexUVs), ((char*)0) + 32);
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VertexUVs), ((char*)0) + 44);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	m_proceduralVAO = m_VAO;*/
+	m_proceduralVAO = m_VAO;
 
+	m_seed = 7.0f;
+
+	m_terrainLightDirection = vec3(0, 1, 0);
+
+	ResetProceduralPlane();
+}
+
+void Renderer::ResetProceduralPlane()
+{
 	int dims = 64;
 	m_perlinData = new float[dims * dims];
-
+	float scale = (1.0f / dims) * 3;
+	int octaves = 6;
+	
 	for (int x = 0; x < 64; ++x)
 	{
 		for (int y = 0; y < 64; ++y)
 		{
-			m_perlinData[y * dims + x] = glm::perlin(glm::vec2(x, y) * 10) * 0.5f + 0.5f;
+			//m_perlinData[y * dims + x] = glm::perlin(vec2(x, y) * 0.1) * 0.5f + 0.5f;
+			float amplitude = 1.f;
+			float persistence = 0.3f;
+			m_perlinData[y * dims + x] = 0;
+
+			for (int o = 0; o < octaves; ++o)
+			{
+				float freq = powf(2, (float)o);
+				float perlin_sample = glm::perlin(vec3((float)x, (float)y, (float)m_seed) * scale * freq) * 0.5f + 0.5f;
+				m_perlinData[y * dims + x] += perlin_sample * amplitude;
+				amplitude *= persistence;
+			}
 		}
 	}
 
