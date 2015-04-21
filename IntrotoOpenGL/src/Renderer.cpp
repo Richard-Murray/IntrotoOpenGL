@@ -591,7 +591,7 @@ void Renderer::Load()
 	//shadow maps
 	//----------
 	m_FBXBunny = new FBXFile();
-	m_FBXBunny->load("./data/models/Cube.fbx");
+	m_FBXBunny->load("./data/models/Bunny.fbx");
 //	m_FBXBunny->initialiseOpenGLTextures();
 	CreateOpenGLBuffers(m_FBXBunny);
 	

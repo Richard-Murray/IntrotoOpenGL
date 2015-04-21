@@ -3,3 +3,8 @@ IntrotoOpenGL/dep/glfw/docs/
 IntrotoOpenGL/dep/stb-master/tests/
 IntrotoOpenGL/dep/glm/test/
 FBXLoader*.lib
+IntrotoOpenGL.sdf
+IntrotoOpenGL.v12.suo
+Debug/IntrotoOpenGL.exe
+Debug/IntrotoOpenGL.ilk
+Debug/IntrotoOpenGL.pdb
