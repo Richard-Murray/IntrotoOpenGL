@@ -369,6 +369,9 @@ void Renderer::DrawScene(BaseCamera* camera)
 	loc = glGetUniformLocation(m_programTerrainID, "light_direction");
 	glUniform3fv(loc, 1, glm::value_ptr(m_terrainLightDirection));
 
+	loc = glGetUniformLocation(m_programTerrainID, "camera_position");
+	glUniform3fv(loc, 1, glm::value_ptr(camera->GetPosition()));
+
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(m_proceduralVAO);
 	glDrawElements(GL_TRIANGLES, 64 * 64 * 6, GL_UNSIGNED_INT, nullptr);
