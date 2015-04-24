@@ -445,6 +445,7 @@ void Renderer::Load()
 	m_gpuParticleEmitter = new GPUParticleEmitter();
 	m_gpuParticleEmitter->Initialise(100000, 0.1f, 5.0f, 5, 20, 1, 0.1f, glm::vec4(1, 0, 0, 1), glm::vec4(1, 1, 0, 1));
 
+	//Animated model
 	m_FBX = new FBXFile();
 	m_FBX->load("data/characters/Pyro/pyro.fbx");
 	m_FBX->initialiseOpenGLTextures();
