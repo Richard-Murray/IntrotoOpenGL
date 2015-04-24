@@ -34,43 +34,6 @@ void Renderer::Update(float deltaTime)
 {
 	float s = glm::cos((float)glfwGetTime()) * 0.5f + 0.5f;
 
-
-	//All stuff for test skeleton
-	/*glm::vec3 p = (1.0f - s) * m_hipFrames[0].position +
-		s * m_hipFrames[1].position;
-
-	glm::quat r = glm::slerp(m_hipFrames[0].rotation,
-		m_hipFrames[1].rotation, s);
-
-	m_hipBone = glm::translate(p) * glm::toMat4(r);
-
-	p = (1.0f - s) * m_kneeFrames[0].position +
-		s * m_kneeFrames[1].position;
-
-	r = glm::slerp(m_kneeFrames[0].rotation,
-		m_kneeFrames[1].rotation, s);
-
-	m_kneeBone = m_hipBone * glm::translate(p) * glm::toMat4(r);
-
-	p = (1.0f - s) * m_ankleFrames[0].position +
-		s * m_ankleFrames[1].position;
-
-	r = glm::slerp(m_ankleFrames[0].rotation,
-		m_ankleFrames[1].rotation, s);
-
-	m_ankleBone = m_kneeBone * glm::translate(p) * glm::toMat4(r);
-
-	glm::vec3 hipPos = glm::vec3(m_hipBone[3].x, m_hipBone[3].y, m_hipBone[3].z);
-	glm::vec3 kneePos = glm::vec3(m_kneeBone[3].x, m_kneeBone[3].y, m_kneeBone[3].z);
-	glm::vec3 anklePos = glm::vec3(m_ankleBone[3].x, m_ankleBone[3].y, m_ankleBone[3].z);
-
-	glm::vec3 half(0.5f);
-	glm::vec4 pink(1, 0, 1, 1);
-
-	Gizmos::addAABBFilled(hipPos, half, pink, &m_hipBone);
-	Gizmos::addAABBFilled(kneePos, half, pink, &m_kneeBone);
-	Gizmos::addAABBFilled(anklePos, half, pink, &m_ankleBone);*/
-
 	//SKELETON STUFF
 	FBXSkeleton* skeleton = m_FBX->getSkeletonByIndex(0);
 	FBXAnimation* animation = m_FBX->getAnimationByIndex(0);
@@ -82,11 +45,7 @@ void Renderer::Update(float deltaTime)
 		skeleton->m_nodes[bone_index]->updateGlobalTransform();
 	}
 
-	//m_particleEmitter->Update(deltaTime, m_camera->GetTransform());
 	m_gpuParticleEmitter->Update(deltaTime);
-
-	//Render target code
-	//Gizmos::addSphere(vec3(0, 5, 0), 0.5f, 8, 8, vec4(1, 1, 0, 1));
 
 	if (glfwGetKey(m_window, GLFW_KEY_F) == GLFW_PRESS)
 	{
@@ -495,59 +454,10 @@ void Renderer::Load()
 	//----------
 	int imageWidth = 0, imageHeight = 0, imageFormat = 0;
 
-	//load diffuse map
-	unsigned char* data = stbi_load("./data/textures/rock_diffuse.tga", &imageWidth, &imageHeight, &imageFormat, STBI_default);
-
-	glGenTextures(1, &m_texture);
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB /*REMEMBER RGBA*/, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	stbi_image_free(data);
-
-	//load normal map
-	data = stbi_load("./data/textures/rock_normal.tga", &imageWidth, &imageHeight, &imageFormat, STBI_default);
-
-	glGenTextures(1, &m_normalMap);
-	glBindTexture(GL_TEXTURE_2D, m_normalMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-	stbi_image_free(data);
+	LoadTexture(m_texture, "./data/textures/rock_diffuse.tga");
+	LoadTexture(m_normalMap, "./data/textures/rock_normal.tga");
 	//----------
 	
-	//Test content for gizmos animation
-	//----------
-	/*m_positions[0] = glm::vec3(10, 5, 10);
-	m_positions[1] = glm::vec3(-10, 0, -10);
-	m_positions[2] = glm::vec3(-10, 10, -10);
-	m_positions[3] = glm::vec3(0, 0, 40);
-	m_rotations[0] = glm::quat(glm::vec3(0, -1, 0));
-	m_rotations[1] = glm::quat(glm::vec3(0, 1, 0));
-	m_rotations[2] = glm::quat(glm::vec3(0, 0, 1));
-	m_rotations[3] = glm::quat(glm::vec3(1, 0, 0));
-	anim = 0;
-	anim2 = 1;
-	animCountdown = 0.0f;
-
-	m_hipFrames[0].position = glm::vec3(0, 5, 0);
-	m_hipFrames[0].rotation = glm::quat(glm::vec3(1, 0, 0));
-	m_hipFrames[1].position = glm::vec3(0, 5, 0);
-	m_hipFrames[1].rotation = glm::quat(glm::vec3(-1, 0, 0));
-
-	m_kneeFrames[0].position = glm::vec3(0, -2.5f, 0);
-	m_kneeFrames[0].rotation = glm::quat(glm::vec3(1, 0, 0));
-	m_kneeFrames[1].position = glm::vec3(0, -2.5f, 0);
-	m_kneeFrames[1].rotation = glm::quat(glm::vec3(0, 0, 0));
-
-	m_ankleFrames[0].position = glm::vec3(0, -2.5f, 0);
-	m_ankleFrames[0].rotation = glm::quat(glm::vec3(-1, 0, 0));
-	m_ankleFrames[1].position = glm::vec3(0, -2.5f, 0);
-	m_ankleFrames[1].rotation = glm::quat(glm::vec3(0, 0, 0));*/
-	//----------
-
 	//Render target loading
 	//----------
 	m_pDefferedRenderTarget = new RenderTarget();
@@ -594,8 +504,9 @@ void Renderer::Load()
 	//shadow maps
 	//----------
 	m_FBXBunny = new FBXFile();
-	m_FBXBunny->load("./data/models/Bunny.fbx");
-//	m_FBXBunny->initialiseOpenGLTextures();
+	//m_FBXBunny->load("./data/models/Cube.fbx");
+	m_FBXBunny->load("data/models/BedSetMediumPoly.fbx");
+	//m_FBXBunny->initialiseOpenGLTextures();
 	CreateOpenGLBuffers(m_FBXBunny);
 	
 	m_lightDir = glm::normalize(glm::vec3(1, 2.5f, 1));
@@ -699,8 +610,6 @@ void Renderer::CreateShader(unsigned int &shader, const char* vert, const char* 
 	unsigned int fs = LoadShader(GL_FRAGMENT_SHADER, frag);
 
 	int success = GL_FALSE;
-	//
-	//unsigned int shader;
 
 	shader = glCreateProgram();
 	glAttachShader(shader, vs);

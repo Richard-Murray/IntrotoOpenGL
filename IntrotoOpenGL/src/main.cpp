@@ -10,10 +10,11 @@
 #include "Application4.h"
 #include "Application5.h"
 #include "Application6.h"
+#include "Application7.h"
 
 int main() {
 
-	Application6 *application = new Application6();
+	Application7 *application = new Application7();
 
 	application->Run();
 }

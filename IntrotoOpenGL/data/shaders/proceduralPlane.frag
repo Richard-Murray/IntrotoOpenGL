@@ -64,7 +64,7 @@ void main()
 	float s = max(0, dot(E, R)); 
 	s = pow( s, 1.0f); //specularpower
 	
-	vec3 light_colour = vec3(0.5f, 0.5f, 0.5f);
+	vec3 light_colour = vec3(1.0f, 1.0f, 1.0f);
 	
 	out_colour.rgb = out_colour.rgb * d;
 	out_colour.a = 1;
