@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "ModelManager.h"
 
 using glm::vec2;
 using glm::vec3;
@@ -28,6 +29,8 @@ Renderer::~Renderer()
 	glDeleteProgram(m_programTexturePlaneID);
 
 	CleanupOpenGLBuffers(m_FBX);
+
+	delete m_modelManager;
 }
 
 void Renderer::Update(float deltaTime)
@@ -205,6 +208,18 @@ void Renderer::DrawScene(BaseCamera* camera)
 			glBindVertexArray(glData[0]);
 			glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
 		}
+
+		m_modelManager->GetModel("Cube1")->DrawModel();
+
+		/*for (unsigned int i = 0; i < m_FBXextratest->getMeshCount(); ++i)
+		{
+			FBXMeshNode* mesh = m_FBXextratest->getMeshByIndex(i);
+
+			unsigned int* glData = (unsigned int*)mesh->m_userData;
+
+			glBindVertexArray(glData[0]);
+			glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
+		}*/
 
 
 		//----------
@@ -424,6 +439,9 @@ void Renderer::DrawDeferredRenderingContent(BaseCamera* camera)
 
 void Renderer::Load()
 {
+	m_modelManager = new ModelManager(this);
+	m_modelManager->AddModel("Cube1", "data/models/Cube.fbx");
+
 	CreateShader(m_programObjID, "./data/shaders/obj.vert", "./data/shaders/obj.frag");
 	CreateShader(m_programTexturePlaneID, "./data/shaders/texPlane.vert", "./data/shaders/texPlane.frag");
 	CreateShader(m_programTexturePlaneSimpleID, "./data/shaders/texPlaneSimple.vert", "./data/shaders/texPlaneSimple.frag");
@@ -509,6 +527,11 @@ void Renderer::Load()
 	m_FBXBunny->load("data/models/BedSetMediumPoly.fbx");
 	//m_FBXBunny->initialiseOpenGLTextures();
 	CreateOpenGLBuffers(m_FBXBunny);
+
+	m_FBXextratest = new FBXFile();
+	m_FBXextratest->load("data/models/Cube.fbx");
+	m_FBXextratest->initialiseOpenGLTextures();
+	CreateOpenGLBuffers(m_FBXextratest);
 	
 	m_lightDir = glm::normalize(glm::vec3(1, 2.5f, 1));
 

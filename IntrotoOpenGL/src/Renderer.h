@@ -20,6 +20,8 @@
 #include "Vertex.h"
 #include "RenderTarget.h"
 
+class ModelManager;
+
 
 class Renderer
 {
@@ -48,6 +50,9 @@ public:
 	void CreateOpenGLBuffers(FBXFile* fbx);
 	void CleanupOpenGLBuffers(FBXFile* fbx);
 
+
+private:
+	ModelManager* m_modelManager;
 
 private:
 
@@ -127,6 +132,7 @@ private:
 	glm::vec3 m_lightDir;
 	glm::mat4 m_lightMatrix;	
 	FBXFile* m_FBXBunny;
+	FBXFile* m_FBXextratest; //Example fbx file
 
 	//Deferred rendering
 	void CreateDeferredRenderingBuffers();
