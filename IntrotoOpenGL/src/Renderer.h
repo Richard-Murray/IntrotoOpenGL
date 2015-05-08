@@ -64,7 +64,7 @@ private:
 	unsigned int m_programShadowMapID;
 	unsigned int m_programShadowMeshID;
 
-	unsigned int m_programGBufferID;
+	unsigned int m_programGeometryBufferID;
 	unsigned int m_programDirectionalLightID;
 	unsigned int m_programCompositeID;
 
@@ -136,17 +136,17 @@ private:
 
 	//Deferred rendering
 	void CreateDeferredRenderingBuffers();
-	unsigned int m_gpassFBO;
+	/*unsigned int m_gpassFBO;
 	unsigned int m_albedoTexture;
 	unsigned int m_positionTexture;
 	unsigned int m_normalTexture;
 	unsigned int m_gpassDepth;
 	unsigned int m_lightFBO;
-	unsigned int m_lightTexture;
+	unsigned int m_lightTexture;*/
 
 	//newstuff
 	RenderTarget* m_pGeometryPassRenderTarget;
-	RenderTarget* m_pLightBufferRenderTarget;
+	RenderTarget* m_pLightPassRenderTarget;
 	void DrawGeometryPass(BaseCamera* camera);
 	void DrawLightPass(BaseCamera* camera);
 	void DrawCompositePass(BaseCamera* camera);

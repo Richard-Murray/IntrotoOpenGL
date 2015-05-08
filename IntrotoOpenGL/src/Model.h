@@ -18,6 +18,7 @@ public:
 private:
 	FBXFile* m_FBX;
 	const char* m_idName;
+	unsigned int m_diffuse; //default diffuse texture
 
 };
 

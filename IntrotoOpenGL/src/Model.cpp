@@ -4,26 +4,27 @@ Model::Model()
 {
 	m_idName = nullptr;
 	m_FBX = nullptr;
+	m_diffuse = 0;
 }
 
 Model::~Model()
 {
-
+	delete m_FBX;
 }
 
 void Model::LoadModel(const char* name, const char* path, Renderer* render)
 {
-	if (m_FBX != nullptr)
-	{
-		//error
-	}	
-	else
+	if (m_FBX == nullptr)
 	{
 		m_FBX = new FBXFile();
 		m_FBX->load(path);
 		m_FBX->initialiseOpenGLTextures();
 		render->CreateOpenGLBuffers(m_FBX);
 		m_idName = name;
+	}	
+	else
+	{
+		//error
 	}
 }
 

@@ -7,7 +7,10 @@ ModelManager::ModelManager(Renderer* pRender)
 
 ModelManager::~ModelManager()
 {
-
+	for (auto iter = m_modelList.begin(); iter != m_modelList.end(); iter++)
+	{
+		m_modelList.clear(); //
+	}
 }
 
 void ModelManager::AddModel(const char* idName, const char* path)
@@ -30,7 +33,6 @@ Model* ModelManager::GetModel(const char* idName)
 				return (*iter);
 			}
 		}
-		//search and return model
 	}
 	else
 	{

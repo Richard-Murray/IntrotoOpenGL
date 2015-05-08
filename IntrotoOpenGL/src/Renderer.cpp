@@ -22,7 +22,7 @@ Renderer::~Renderer()
 	delete m_pLightingRenderTarget;
 	delete m_pDefferedRenderTarget;
 
-	delete m_FBX;
+	//delete m_FBX;
 	delete m_gpuParticleEmitter;
 	
 	glDeleteProgram(m_programObjID);
@@ -64,42 +64,59 @@ void Renderer::Update(float deltaTime)
 
 void Renderer::Draw()
 {
-	////Regular drawing
-	m_pLightingRenderTarget->SetAsActiveRenderTarget();
-	glClear(GL_DEPTH_BUFFER_BIT);
-	
-	DrawLighting(m_targetCamera);
-	
-	m_pDefferedRenderTarget->SetAsActiveRenderTarget();
-	glClearColor(0.25f, 0.25f, 0.25f, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	DrawScene(m_targetCamera);
-	//Gizmos::draw(m_targetCamera->GetProjectionView());
+	//////Regular drawing
+	//m_pLightingRenderTarget->SetAsActiveRenderTarget();
+	//glClear(GL_DEPTH_BUFFER_BIT);
+	//
+	//DrawLighting(m_targetCamera);
+	//
+	//m_pDefferedRenderTarget->SetAsActiveRenderTarget();
+	//glClearColor(0.25f, 0.25f, 0.25f, 1);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//
+	//DrawScene(m_targetCamera);
+	////Gizmos::draw(m_targetCamera->GetProjectionView());
 
-	m_pDefferedRenderTarget->ClearAsActiveRenderTarget();
-	glClearColor(0.55f, 0.55f, 0.55f, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//m_pDefferedRenderTarget->ClearAsActiveRenderTarget();
+	//glClearColor(0.55f, 0.55f, 0.55f, 1);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(m_programTexturePlaneSimpleID);
-	
-	int loc = glGetUniformLocation(m_programTexturePlaneSimpleID, "ProjectionView");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, &(m_camera->GetProjectionView()[0][0]));
-	
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_pDefferedRenderTarget->GetRenderTexture(0));
-	glUniform1i(glGetUniformLocation(m_programTexturePlaneSimpleID, "diffuse"), 0);
-	
-	glBindVertexArray(m_VAOplane);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+	//glUseProgram(m_programTexturePlaneSimpleID);
+	//
+	//int loc = glGetUniformLocation(m_programTexturePlaneSimpleID, "ProjectionView");
+	//glUniformMatrix4fv(loc, 1, GL_FALSE, &(m_camera->GetProjectionView()[0][0]));
+	//
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_pDefferedRenderTarget->GetRenderTexture(0));
+	//glUniform1i(glGetUniformLocation(m_programTexturePlaneSimpleID, "diffuse"), 0);
+	//
+	//glBindVertexArray(m_VAOplane);
+	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-	DrawScene(m_camera);
+	//DrawScene(m_camera);
 
-	TwDraw();
+	//TwDraw();
 
 	////Deferred rendering drawing
+	m_pGeometryPassRenderTarget->SetAsActiveRenderTarget();
+	//m_pGeometryPassRenderTarget->ClearAsActiveRenderTarget();//
+	// G-Pass: render out the albedo, position and normal
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	DrawGeometryPass(m_camera);
 
-	////Post process drawing
+	glDisable(GL_DEPTH_TEST);
+
+	m_pLightPassRenderTarget->SetAsActiveRenderTarget();
+	glClear(GL_COLOR_BUFFER_BIT);
+	DrawLightPass(m_camera);
+
+	m_pLightPassRenderTarget->ClearAsActiveRenderTarget();
+	glClear(GL_COLOR_BUFFER_BIT);
+	DrawCompositePass(m_camera);
+
+	glEnable(GL_DEPTH_TEST);
+	//////Post process drawing
 	//// bind our target
 	//glBindFramebuffer(GL_FRAMEBUFFER, m_pPostProcessRenderTarget->GetFBO());
 	//glViewport(0, 0, 1280, 720);
@@ -143,7 +160,7 @@ void Renderer::DrawLighting(BaseCamera* camera)
 	glUniformMatrix4fv(loc, 1, GL_FALSE, &(m_lightMatrix[0][0]));
 
 	//draw all shadow-casting geometry
-	for (unsigned int i = 0; i < m_FBXBunny->getMeshCount(); ++i)
+	/*for (unsigned int i = 0; i < m_FBXBunny->getMeshCount(); ++i)
 	{
 		FBXMeshNode* mesh = m_FBXBunny->getMeshByIndex(i);
 
@@ -151,7 +168,9 @@ void Renderer::DrawLighting(BaseCamera* camera)
 
 		glBindVertexArray(glData[0]);
 		glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
-	}
+	}*/
+	m_modelManager->GetModel("BedSet")->DrawModel();
+	m_modelManager->GetModel("Cube1")->DrawModel();
 }
 
 void Renderer::DrawScene(BaseCamera* camera)
@@ -199,7 +218,7 @@ void Renderer::DrawScene(BaseCamera* camera)
 		glBindTexture(GL_TEXTURE_2D, m_pLightingRenderTarget->GetDepthTexture());
 
 		//draw all shadow-recieving
-		for (unsigned int i = 0; i < m_FBXBunny->getMeshCount(); ++i)
+		/*for (unsigned int i = 0; i < m_FBXBunny->getMeshCount(); ++i)
 		{
 			FBXMeshNode* mesh = m_FBXBunny->getMeshByIndex(i);
 
@@ -207,8 +226,9 @@ void Renderer::DrawScene(BaseCamera* camera)
 
 			glBindVertexArray(glData[0]);
 			glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
-		}
+		}*/
 
+		m_modelManager->GetModel("BedSet")->DrawModel();
 		m_modelManager->GetModel("Cube1")->DrawModel();
 
 		/*for (unsigned int i = 0; i < m_FBXextratest->getMeshCount(); ++i)
@@ -357,51 +377,101 @@ void Renderer::DrawScene(BaseCamera* camera)
 	
 }
 
-//void Renderer::DrawGeometryPass(BaseCamera* camera)
-//{
-//	// G-Pass: render out the albedo, position and normal
-//	glEnable(GL_DEPTH_TEST);
-//	glBindFramebuffer(GL_FRAMEBUFFER, m_gpassFBO);
-//	glClearColor(0, 0, 0, 0);
-//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//	glUseProgram(m_gpassShader);
-//	// bind camera transforms
-//	int loc = glGetUniformLocation(m_gpassShader, "ProjectionView");
-//	glUniformMatrix4fv(loc, 1, GL_FALSE,
-//		&(m_camera->getProjectionView()[0][0]));
-//	loc = glGetUniformLocation(m_gpassShader, "View");
-//	glUniformMatrix4fv(loc, 1, GL_FALSE,
-//		&(m_camera->getView()[0][0]));
-//	// draw our scene, in this example just the Stanford Bunny
-//	for (unsigned int i = 0; i < m_fbx->getMeshCount(); ++i) {
-//		FBXMeshNode* mesh = m_fbx->getMeshByIndex(i);
-//		unsigned int* glData = (unsigned int*)mesh->m_userData;
-//		glBindVertexArray(glData[0]);
-//		glDrawElements(GL_TRIANGLES,
-//			(unsigned int)mesh->m_indices.size(),
-//			GL_UNSIGNED_INT, 0);
-//	}
-//}
-//
-//void Renderer::DrawLightPass(BaseCamera* camera)
-//{}
-//
-//void Renderer::DrawCompositePass(BaseCamera* camera)
-//{}
+void Renderer::DrawGeometryPass(BaseCamera* camera)
+{
+	//// G-Pass: render out the albedo, position and normal
+	//glEnable(GL_DEPTH_TEST);
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_gpassFBO);
+	//glClearColor(0, 0, 0, 0);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//void Renderer::DrawDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse)
-//{
-//	glm::vec4 viewSpaceLight = m_camera->GetView() *glm::vec4(glm::normalize(direction), 0);
-//
-//	int loc = glGetUniformLocation(m_programDirectionalLightID, "lightDirection");
-//	glUniform3fv(loc, 1, &viewSpaceLight[0]);
-//
-//	loc = glGetUniformLocation(m_programDirectionalLightID, "lightDiffuse");
-//	glUniform3fv(loc, 1, &diffuse[0]);
-//
-//	glBindVertexArray(m_quadVAO);
-//	glDrawArrays(GL_TRIANGLES, 0, 6);
-//}
+	glUseProgram(m_programGeometryBufferID);
+
+	// bind camera transforms.0
+	int loc = glGetUniformLocation(m_programGeometryBufferID, "ProjectionView");
+	glUniformMatrix4fv(loc, 1, GL_FALSE, &(m_camera->GetProjectionView()[0][0]));
+	loc = glGetUniformLocation(m_programGeometryBufferID, "View");
+	glUniformMatrix4fv(loc, 1, GL_FALSE, &(m_camera->GetView()[0][0]));
+
+	// draw our scene, in this example just the Stanford Bunny
+	/*for (unsigned int i = 0; i < m_fbx->getMeshCount(); ++i) {
+
+		FBXMeshNode* mesh = m_fbx->getMeshByIndex(i);
+
+		unsigned int* glData = (unsigned int*)mesh->m_userData;
+
+		glBindVertexArray(glData[0]);
+
+		glDrawElements(GL_TRIANGLES, (unsigned int)mesh->m_indices.size(), GL_UNSIGNED_INT, 0);
+	}*/
+	m_modelManager->GetModel("BedSet")->DrawModel();
+	m_modelManager->GetModel("Cube1")->DrawModel();
+}
+
+void Renderer::DrawLightPass(BaseCamera* camera)
+{
+	// Light Pass: render lights as geometry, sampling position and
+	// normals disable depth testing and enable additive blending
+
+	/*glBindFramebuffer(GL_FRAMEBUFFER, m_lightFBO);
+	glClear(GL_COLOR_BUFFER_BIT);*/
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	glUseProgram(m_programDirectionalLightID);
+
+	int loc = glGetUniformLocation(m_programDirectionalLightID,"positionTexture");
+	glUniform1i(loc, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(1));
+
+	loc = glGetUniformLocation(m_programDirectionalLightID, "normalTexture");
+	glUniform1i(loc, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(2));
+
+	// draw lights as fullscreen quads
+	DrawDirectionalLight(glm::vec3(-1), glm::vec3(1));
+
+	glDisable(GL_BLEND);
+}
+
+void Renderer::DrawCompositePass(BaseCamera* camera)
+{
+	// Composite Pass: render a quad and combine albedo and light
+	/*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT);*/
+
+	glUseProgram(m_programCompositeID);
+
+	int loc = glGetUniformLocation(m_programCompositeID, "albedoTexture");
+	glUniform1i(loc, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(0)); //important, need to change
+
+	loc = glGetUniformLocation(m_programCompositeID, "lightTexture");
+	glUniform1i(loc, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_pLightPassRenderTarget->GetRenderTexture(0));
+
+	glBindVertexArray(m_VAOfullScreenQuad);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void Renderer::DrawDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse)
+{
+	glm::vec4 viewSpaceLight = m_camera->GetView() *glm::vec4(glm::normalize(direction), 0);
+
+	int loc = glGetUniformLocation(m_programDirectionalLightID, "lightDirection");
+	glUniform3fv(loc, 1, &viewSpaceLight[0]);
+
+	loc = glGetUniformLocation(m_programDirectionalLightID, "lightDiffuse");
+	glUniform3fv(loc, 1, &diffuse[0]);
+
+	glBindVertexArray(m_VAOfullScreenQuad);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
 
 //UNUSED
 void Renderer::DrawDeferredRenderingContent(BaseCamera* camera)
@@ -441,6 +511,7 @@ void Renderer::Load()
 {
 	m_modelManager = new ModelManager(this);
 	m_modelManager->AddModel("Cube1", "data/models/Cube.fbx");
+	m_modelManager->AddModel("BedSet", "data/models/Bunny.fbx");
 
 	CreateShader(m_programObjID, "./data/shaders/obj.vert", "./data/shaders/obj.frag");
 	CreateShader(m_programTexturePlaneID, "./data/shaders/texPlane.vert", "./data/shaders/texPlane.frag");
@@ -449,7 +520,7 @@ void Renderer::Load()
 	CreateShader(m_programShadowMeshID, "./data/shaders/shadowMesh.vert", "./data/shaders/shadowMesh.frag");
 	CreateShader(m_programShadowMapID, "./data/shaders/shadowMap.vert", "./data/shaders/shadowMap.frag");
 
-	CreateShader(m_programGBufferID, "./data/shaders/deferredGbuffer.vert", "./data/shaders/deferredGbuffer.frag");
+	CreateShader(m_programGeometryBufferID, "./data/shaders/deferredGbuffer.vert", "./data/shaders/deferredGbuffer.frag");
 	CreateShader(m_programDirectionalLightID, "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
 	CreateShader(m_programCompositeID, "./data/shaders/deferredComposite.vert", "./data/shaders/deferredComposite.frag");
 
@@ -503,10 +574,11 @@ void Renderer::Load()
 	m_pGeometryPassRenderTarget->AttachDepthBuffer();
 	m_pGeometryPassRenderTarget->SetDrawBuffers();
 
-	m_pLightBufferRenderTarget = new RenderTarget();
-	m_pLightBufferRenderTarget->SetSize(1280, 720);
-	m_pLightBufferRenderTarget->AttachColourBuffer(0, GL_RGB8);
-	m_pLightBufferRenderTarget->SetDrawBuffers();
+	m_pLightPassRenderTarget = new RenderTarget();
+	m_pLightPassRenderTarget->SetSize(1280, 720);
+	m_pLightPassRenderTarget->Initialise();
+	m_pLightPassRenderTarget->AttachColourBuffer(0, GL_RGB8);
+	m_pLightPassRenderTarget->SetDrawBuffers();
 
 	m_pPostProcessRenderTarget = new RenderTarget();
 	m_pPostProcessRenderTarget->SetSize(1280, 720);
@@ -522,16 +594,15 @@ void Renderer::Load()
 
 	//shadow maps
 	//----------
-	m_FBXBunny = new FBXFile();
-	//m_FBXBunny->load("./data/models/Cube.fbx");
-	m_FBXBunny->load("data/models/BedSetMediumPoly.fbx");
+	//m_FBXBunny = new FBXFile();
+	//m_FBXBunny->load("data/models/BedSetMediumPoly.fbx");
 	//m_FBXBunny->initialiseOpenGLTextures();
-	CreateOpenGLBuffers(m_FBXBunny);
+	//CreateOpenGLBuffers(m_FBXBunny);
 
-	m_FBXextratest = new FBXFile();
+	/*m_FBXextratest = new FBXFile();
 	m_FBXextratest->load("data/models/Cube.fbx");
 	m_FBXextratest->initialiseOpenGLTextures();
-	CreateOpenGLBuffers(m_FBXextratest);
+	CreateOpenGLBuffers(m_FBXextratest);*/
 	
 	m_lightDir = glm::normalize(glm::vec3(1, 2.5f, 1));
 
@@ -551,7 +622,7 @@ void Renderer::Load()
 
 	//deferred rendering
 	//----------
-	CreateDeferredRenderingBuffers();
+	//CreateDeferredRenderingBuffers();
 
 	//----------
 
@@ -722,7 +793,7 @@ void Renderer::CreateOpenGLBuffers(FBXFile* fbx)
 		glEnableVertexAttribArray(0); //position
 		glEnableVertexAttribArray(1); //normal
 		glEnableVertexAttribArray(2); //texture coordinates
-		glEnableVertexAttribArray(3); //tangents
+		glEnableVertexAttribArray(3); //tangentsss
 		glEnableVertexAttribArray(4); //weights
 		glEnableVertexAttribArray(5); //indices
 
@@ -757,65 +828,65 @@ void Renderer::CleanupOpenGLBuffers(FBXFile* fbx)
 	}
 }
 
-void Renderer::CreateDeferredRenderingBuffers()
-{
-	//setup gpass framebuffer
-	glGenFramebuffers(1, &m_gpassFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_gpassFBO);
-
-	glGenTextures(1, &m_albedoTexture);
-	glBindTexture(GL_TEXTURE_2D, m_albedoTexture);
-
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, 1280, 720);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glGenTextures(1, &m_positionTexture);
-	glBindTexture(GL_TEXTURE_2D, m_positionTexture);
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1280, 720);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glGenTextures(1, &m_normalTexture);
-	glBindTexture(GL_TEXTURE_2D, m_normalTexture);
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1280, 720);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glGenRenderbuffers(1, &m_gpassDepth);
-	glBindRenderbuffer(GL_RENDERBUFFER, m_gpassDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,1280, 720);
-
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_albedoTexture, 0);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, m_positionTexture, 0);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, m_normalTexture, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_gpassDepth);
-
-	GLenum gpassTargets[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, gpassTargets);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	//set up light framebuffer
-	glGenFramebuffers(1, &m_lightFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_lightFBO);
-
-	glGenTextures(1, &m_lightTexture);
-	glBindTexture(GL_TEXTURE_2D, m_lightTexture);
-
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, 1280, 720);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lightTexture, 0);
-
-	GLenum lightTargets[] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, lightTargets);
-
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (status != GL_FRAMEBUFFER_COMPLETE)
-		printf("Framebuffer Error!\n");
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
+//void Renderer::CreateDeferredRenderingBuffers()
+//{
+//	//setup gpass framebuffer
+//	glGenFramebuffers(1, &m_gpassFBO);
+//	glBindFramebuffer(GL_FRAMEBUFFER, m_gpassFBO);
+//
+//	glGenTextures(1, &m_albedoTexture);
+//	glBindTexture(GL_TEXTURE_2D, m_albedoTexture);
+//
+//	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, 1280, 720);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//
+//	glGenTextures(1, &m_positionTexture);
+//	glBindTexture(GL_TEXTURE_2D, m_positionTexture);
+//	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1280, 720);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//
+//	glGenTextures(1, &m_normalTexture);
+//	glBindTexture(GL_TEXTURE_2D, m_normalTexture);
+//	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1280, 720);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//
+//	glGenRenderbuffers(1, &m_gpassDepth);
+//	glBindRenderbuffer(GL_RENDERBUFFER, m_gpassDepth);
+//	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT,1280, 720);
+//
+//	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_albedoTexture, 0);
+//	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, m_positionTexture, 0);
+//	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, m_normalTexture, 0);
+//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_gpassDepth);
+//
+//	GLenum gpassTargets[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+//	glDrawBuffers(3, gpassTargets);
+//
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//
+//	//set up light framebuffer
+//	glGenFramebuffers(1, &m_lightFBO);
+//	glBindFramebuffer(GL_FRAMEBUFFER, m_lightFBO);
+//
+//	glGenTextures(1, &m_lightTexture);
+//	glBindTexture(GL_TEXTURE_2D, m_lightTexture);
+//
+//	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, 1280, 720);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lightTexture, 0);
+//
+//	GLenum lightTargets[] = { GL_COLOR_ATTACHMENT0 };
+//	glDrawBuffers(1, lightTargets);
+//
+//	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+//	if (status != GL_FRAMEBUFFER_COMPLETE)
+//		printf("Framebuffer Error!\n");
+//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//}
 
 void Renderer::CreateFullScreenQuad()
 {

@@ -132,7 +132,7 @@ void FlyCamera::HandleKeyboardInput(double dt)
 	if (glfwGetKey(m_pWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
 		moveDir -= vUp;
-	}
+	} //REMEMBER
 
 	//if (glfwGetKey(m_pWindow, GLFW_KEY_A) == GLFW_PRESS)
 	//{
