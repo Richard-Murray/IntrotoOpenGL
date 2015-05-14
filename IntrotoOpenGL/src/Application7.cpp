@@ -15,6 +15,8 @@
 #include <stb_image.h>
 #include "tiny_obj_loader.h"
 
+#include "ModelManager.h"
+
 using glm::vec3;
 using glm::vec4;
 using glm::mat4;
@@ -25,6 +27,13 @@ struct Vertex;
 
 Application7::Application7()
 {}
+
+Application7::~Application7()
+{
+	delete m_entityManager;
+	delete m_renderer;
+	delete m_camera;
+}
 
 int Application7::Run()
 {
@@ -76,7 +85,7 @@ int Application7::Run()
 		glfwPollEvents();
 	}
 
-	delete m_meshArray;
+	//delete m_meshArray;
 	delete m_camera;
 
 	Gizmos::destroy();
@@ -90,6 +99,7 @@ void Application7::Update(float deltaTime)
 {
 	m_renderer->Update(deltaTime);
 	m_camera->Update(deltaTime);
+	m_entityManager->Update(deltaTime);
 }
 
 void Application7::Draw()
@@ -105,4 +115,9 @@ void Application7::Load()
 
 	m_renderer = new Renderer(m_camera, m_window);
 	m_renderer->Load();
+
+	m_entityManager = new EntityManager();
+	m_renderer->AddEntityManager(m_entityManager);
+	m_entityManager->CreateEntity("Test1");
+	m_entityManager->GetNewEntity()->AttachModel(m_renderer->GetModelManager()->GetModel("Cube1"));
 }

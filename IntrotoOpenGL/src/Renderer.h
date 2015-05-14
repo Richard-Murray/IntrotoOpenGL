@@ -20,8 +20,10 @@
 #include "Vertex.h"
 #include "RenderTarget.h"
 
-class ModelManager;
+class Entity;
 
+class ModelManager;
+class EntityManager;
 
 class Renderer
 {
@@ -33,7 +35,6 @@ public:
 	void Draw();
 	void DrawScene(BaseCamera* camera);
 	void DrawLighting(BaseCamera* camera);
-	void DrawDeferredRenderingContent(BaseCamera* camera);
 	void DrawDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse);
 
 	void Load();
@@ -44,15 +45,16 @@ public:
 
 	void LoadTexture(unsigned int &texture, const char* path);
 
-	void CreateTextureShader();
-	void CreateObjShader();
-
 	void CreateOpenGLBuffers(FBXFile* fbx);
 	void CleanupOpenGLBuffers(FBXFile* fbx);
 
+	void AddEntityManager(EntityManager* m_entityManager);
+
+	ModelManager* GetModelManager();
 
 private:
 	ModelManager* m_modelManager;
+	EntityManager* m_entityManager;
 
 private:
 
@@ -103,21 +105,21 @@ private:
 	unsigned int m_texture, m_normalMap;
 
 	//Gizmo movement animation
-	glm::vec3 m_positions[4];
+	/*glm::vec3 m_positions[4];
 	glm::quat m_rotations[4];
 
 	unsigned int anim;
 	unsigned int anim2;
-	float animCountdown;
+	float animCountdown;*/
 
 	//Gizmo test animation
-	KeyFrame m_hipFrames[2];
+	/*KeyFrame m_hipFrames[2];
 	KeyFrame m_kneeFrames[2];
 	KeyFrame m_ankleFrames[2];
 
 	glm::mat4 m_hipBone;
 	glm::mat4 m_kneeBone;
-	glm::mat4 m_ankleBone;
+	glm::mat4 m_ankleBone;*/
 
 	//Render targets
 	RenderTarget* m_pDefferedRenderTarget;
@@ -131,18 +133,18 @@ private:
 	//Shadow maps
 	glm::vec3 m_lightDir;
 	glm::mat4 m_lightMatrix;	
-	FBXFile* m_FBXBunny;
-	FBXFile* m_FBXextratest; //Example fbx file
+	//FBXFile* m_FBXBunny;
+	//FBXFile* m_FBXextratest; //Example fbx file
 
 	//Deferred rendering
-	void CreateDeferredRenderingBuffers();
+	/*void CreateDeferredRenderingBuffers();
 	/*unsigned int m_gpassFBO;
-	unsigned int m_albedoTexture;
-	unsigned int m_positionTexture;
-	unsigned int m_normalTexture;
-	unsigned int m_gpassDepth;
-	unsigned int m_lightFBO;
-	unsigned int m_lightTexture;*/
+	/*unsigned int m_albedoTexture;
+	/*unsigned int m_positionTexture;
+	/*unsigned int m_normalTexture;
+	/*unsigned int m_gpassDepth;
+	/*unsigned int m_lightFBO;
+	/*unsigned int m_lightTexture;*/
 
 	//newstuff
 	RenderTarget* m_pGeometryPassRenderTarget;
@@ -151,21 +153,18 @@ private:
 	void DrawLightPass(BaseCamera* camera);
 	void DrawCompositePass(BaseCamera* camera);
 	
-
-	//remember to actually call the functions create buffers, shaders
-
 	//Postprocess
 	RenderTarget* m_pPostProcessRenderTarget;
 	void CreateFullScreenQuad();
 	unsigned int m_VAOfullScreenQuad;
 
 	//GUI
-	TwBar* m_tweakBar;
+	/*TwBar* m_tweakBar;
 	bool m_hideObjects;
-	bool m_toResetTerrain;
+	bool m_toResetTerrain;*/
 
 	//Procedural generation
-	void GenerateProceduralPlane();
+	/*void GenerateProceduralPlane();
 	void ResetProceduralPlane();
 	float *m_perlinData;
 	unsigned int m_perlinTexture;
@@ -173,11 +172,15 @@ private:
 
 	unsigned int m_grassTexture;
 	unsigned int m_rockTexture;
-	unsigned int m_snowTexture;
+	unsigned int m_snowTexture;*/
 
-	glm::vec3 m_terrainLightDirection;
+	//glm::vec3 m_terrainLightDirection;
 
-	float m_seed;
+	//float m_seed;
+
+	//Entity test
+	Entity* m_entityTest;
+	Entity* m_entity2Test;
 
 	//ignore these
 	void CreatePostProcessFramebuffer();

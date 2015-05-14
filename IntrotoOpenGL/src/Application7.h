@@ -16,8 +16,9 @@
 #include "FBXFile.h"
 
 #include "Renderer.h"
+#include "EntityManager.h"
 
-class MeshArray;
+//class MeshArray;
 class FlyCamera;
 struct OpenGLInfo;
 struct KeyFrame;
@@ -29,13 +30,6 @@ public:
 	~Application7();
 
 	int Run();
-
-	//unsigned int LoadShader(unsigned int type, const char* path);
-
-	void CreateSimpleShader();
-	void CreateTextureShader();
-	void CreateSimpleObjShader();
-	void CreateParticleShader();
 
 	void Load();
 
@@ -51,9 +45,12 @@ private:
 private:
 	Renderer* m_renderer;
 
-	MeshArray* m_meshArray;
+	//MeshArray* m_meshArray;
 	FlyCamera* m_camera;
 	GLFWwindow* m_window;
+
+	EntityManager* m_entityManager;
+	
 };
 
 

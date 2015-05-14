@@ -9,6 +9,7 @@ out vec4 vNormal;
 
 uniform mat4 View; // needed in addition to Projection * View
 uniform mat4 ProjectionView;
+uniform mat4 WorldTransform;
 
 void main() 
 {
@@ -17,5 +18,5 @@ void main()
 	//vNormal = Normal;
 	vNormal = normalize(View * Normal);
 	
-	gl_Position = ProjectionView * Position;
+	gl_Position = ProjectionView * WorldTransform * Position;
 }
