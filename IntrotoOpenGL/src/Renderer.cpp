@@ -1,5 +1,5 @@
 #include "Renderer.h"
-#include "ModelManager.h"
+#include "AssetManager.h"
 #include "Entity.h"
 #include "EntityManager.h"
 
@@ -31,8 +31,6 @@ Renderer::~Renderer()
 	//glDeleteProgram(m_programTexturePlaneID);
 	//
 	//CleanupOpenGLBuffers(m_FBX);
-
-	delete m_modelManager;
 }
 
 void Renderer::Update(float deltaTime)
@@ -65,9 +63,9 @@ void Renderer::Update(float deltaTime)
 	mat4 moveTransform = mat4(	1, 0, 0, 0,
 								0, 1, 0, 0,
 								0, 0, 1, 0,
-								-0.1f, 0, 0, 1);
+								-0.01f, 0, 0, 1);
 
-	m_entityTest->TestMoveTransform(moveTransform);
+	//m_entityTest->TestMoveTransform(moveTransform);
 }
 
 void Renderer::Draw()
@@ -84,11 +82,11 @@ void Renderer::Draw()
 	//
 	//DrawScene(m_targetCamera);
 	////Gizmos::draw(m_targetCamera->GetProjectionView());
-
+	//
 	//m_pDefferedRenderTarget->ClearAsActiveRenderTarget();
 	//glClearColor(0.55f, 0.55f, 0.55f, 1);
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	//
 	//glUseProgram(m_programTexturePlaneSimpleID);
 	//
 	//int loc = glGetUniformLocation(m_programTexturePlaneSimpleID, "ProjectionView");
@@ -100,9 +98,9 @@ void Renderer::Draw()
 	//
 	//glBindVertexArray(m_VAOplane);
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
+	//
 	//DrawScene(m_camera);
-
+	//
 	//TwDraw();
 
 	////Deferred rendering drawing
@@ -129,32 +127,32 @@ void Renderer::Draw()
 	//// bind our target
 	//glBindFramebuffer(GL_FRAMEBUFFER, m_pPostProcessRenderTarget->GetFBO());
 	//glViewport(0, 0, 1280, 720);
-
+	//
 	//// clear the target
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	//
 	//// draw our 3D scene
 	//DrawScene(m_camera);
 	//// gizmos for now
 	//Gizmos::draw(m_camera->GetProjectionView());
-
+	//
 	//// bind the back-buffer
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	//glViewport(0, 0, 1280, 720);
-
+	//
 	//// just clear the back-buffer depth as
 	//// each pixel will be filled
 	//glClear(GL_DEPTH_BUFFER_BIT);
-
+	//
 	//// draw out full-screen quad
 	//glUseProgram(m_programPostProcessID);
-
+	//
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, m_pPostProcessRenderTarget->GetRenderTexture(0));
-
+	//
 	//int loc = glGetUniformLocation(m_programPostProcessID, "target");
 	//glUniform1i(loc, 0);
-
+	//
 	//glBindVertexArray(m_VAOfullScreenQuad);
 	//glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -403,8 +401,10 @@ void Renderer::DrawGeometryPass(BaseCamera* camera)
 	//m_modelManager->GetModel("BedSet")->DrawModel();
 	//m_modelManager->GetModel("Cube1")->DrawModel();
 
-	m_entityTest->Draw(camera);
-	m_entity2Test->Draw(camera);
+	m_pEntityManager->Draw(camera);
+
+	//m_entityTest->Draw(camera);
+	//m_entity2Test->Draw(camera);
 }
 
 void Renderer::DrawLightPass(BaseCamera* camera)
@@ -471,27 +471,31 @@ void Renderer::DrawDirectionalLight(const glm::vec3& direction, const glm::vec3&
 
 void Renderer::Load()
 {
-	m_modelManager = new ModelManager(this);
-	m_modelManager->AddModel("Cube1", "data/models/Cube.fbx");
-	m_modelManager->AddModel("BedSet", "data/models/Crate.fbx");
+	//LoadTextureRGBA(m_defaultTexture, "data/textures/default.png");
+	//
+	//m_pAssetManager = new AssetManager(this);
+	//m_pAssetManager->LoadModel("Cube1", "data/models/Cube.fbx");
+	//m_pAssetManager->LoadModel("BedSet", "data/models/Crate.fbx");
 	
-	CreateShader(m_programObjID, "./data/shaders/obj.vert", "./data/shaders/obj.frag");
-	CreateShader(m_programTexturePlaneID, "./data/shaders/texPlane.vert", "./data/shaders/texPlane.frag");
-	CreateShader(m_programTexturePlaneSimpleID, "./data/shaders/texPlaneSimple.vert", "./data/shaders/texPlaneSimple.frag");
+	//CreateShader(m_programObjID, "./data/shaders/obj.vert", "./data/shaders/obj.frag");
+	//CreateShader(m_programTexturePlaneID, "./data/shaders/texPlane.vert", "./data/shaders/texPlane.frag");
+	//CreateShader(m_programTexturePlaneSimpleID, "./data/shaders/texPlaneSimple.vert", "./data/shaders/texPlaneSimple.frag");
+	//
+	//CreateShader(m_programShadowMeshID, "./data/shaders/shadowMesh.vert", "./data/shaders/shadowMesh.frag");
+	//CreateShader(m_programShadowMapID, "./data/shaders/shadowMap.vert", "./data/shaders/shadowMap.frag");
 
-	CreateShader(m_programShadowMeshID, "./data/shaders/shadowMesh.vert", "./data/shaders/shadowMesh.frag");
-	CreateShader(m_programShadowMapID, "./data/shaders/shadowMap.vert", "./data/shaders/shadowMap.frag");
-
-	CreateShader(m_programGeometryBufferID, "./data/shaders/deferredGbuffer.vert", "./data/shaders/deferredGbuffer.frag");
-	CreateShader(m_programDirectionalLightID, "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
-	CreateShader(m_programCompositeID, "./data/shaders/deferredComposite.vert", "./data/shaders/deferredComposite.frag");
-
-	m_entityTest = new Entity("test");
-	m_entityTest->AttachModel(m_modelManager->GetModel("Cube1"));
-	m_entityTest->AttachShader(m_programGeometryBufferID);
-	m_entity2Test = new Entity("test2");
-	m_entity2Test->AttachModel(m_modelManager->GetModel("BedSet"));
-	m_entity2Test->AttachShader(m_programGeometryBufferID);
+	//CreateShader(m_programGeometryBufferID, "./data/shaders/deferredGbuffer.vert", "./data/shaders/deferredGbuffer.frag");
+	//CreateShader(m_programDirectionalLightID, "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
+	//CreateShader(m_programCompositeID, "./data/shaders/deferredComposite.vert", "./data/shaders/deferredComposite.frag");
+	//
+	//m_entityTest = new Entity("test");
+	//m_entityTest->AttachModel(m_pAssetManager->GetModel("Cube1"));
+	//m_entityTest->AttachShader(m_programGeometryBufferID);
+	//m_entityTest->AttachTexture(m_defaultTexture);
+	//m_entity2Test = new Entity("test2");
+	//m_entity2Test->AttachModel(m_pAssetManager->GetModel("BedSet"));
+	//m_entity2Test->AttachShader(m_programGeometryBufferID);
+	//m_entity2Test->AttachTexture(m_defaultTexture);
 
 	//CreateShader(m_programPostProcessID, "./data/shaders/postProcess.vert", "./data/shaders/postProcess.frag");
 	//
@@ -534,6 +538,10 @@ void Renderer::Load()
 	//
 	//GenerateTexturePlaneAlt();
 
+	m_programGeometryBufferID = m_pAssetManager->GetShader("GeometryPass");
+	m_programDirectionalLightID = m_pAssetManager->GetShader("LightingPass");
+	m_programCompositeID = m_pAssetManager->GetShader("CompositePass");
+
 	m_pGeometryPassRenderTarget = new RenderTarget();
 	m_pGeometryPassRenderTarget->SetSize(1280, 720);
 	m_pGeometryPassRenderTarget->Initialise();
@@ -549,11 +557,13 @@ void Renderer::Load()
 	m_pLightPassRenderTarget->AttachColourBuffer(0, GL_RGB8);
 	m_pLightPassRenderTarget->SetDrawBuffers();
 
-	m_pPostProcessRenderTarget = new RenderTarget();
-	m_pPostProcessRenderTarget->SetSize(1280, 720);
-	m_pPostProcessRenderTarget->AttachColourBuffer(0, GL_RGBA8);
-	m_pPostProcessRenderTarget->AttachDepthBuffer();
-	m_pPostProcessRenderTarget->SetDrawBuffers();
+	//make post process stuff later
+
+	//m_pPostProcessRenderTarget = new RenderTarget();
+	//m_pPostProcessRenderTarget->SetSize(1280, 720);
+	//m_pPostProcessRenderTarget->AttachColourBuffer(0, GL_RGBA8);
+	//m_pPostProcessRenderTarget->AttachDepthBuffer();
+	//m_pPostProcessRenderTarget->SetDrawBuffers();
 
 	/*m_targetCamera = new BaseCamera(vec3(5, 5, 5));
 	m_targetCamera->SetUpPerspective(glm::pi<float>() * 0.25f, 16 / 9.f, 0.1f, 10000.f);*/
@@ -633,6 +643,21 @@ void Renderer::LoadTexture(unsigned int &texture, const char* path)
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imageWidth, imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	stbi_image_free(data);
+}
+
+void Renderer::LoadTextureRGBA(unsigned int &texture, const char* path)
+{
+	int imageWidth = 0, imageHeight = 0, imageFormat = 0;
+
+	unsigned char* data = stbi_load(path, &imageWidth, &imageHeight, &imageFormat, STBI_default);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -1077,12 +1102,12 @@ void Renderer::GenerateTexturePlaneAlt()
 //	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 //}
 
-ModelManager* Renderer::GetModelManager()
+void Renderer::AddAssetManager(AssetManager* assetManager)
 {
-	return m_modelManager;
+	m_pAssetManager = assetManager;
 }
 
 void Renderer::AddEntityManager(EntityManager* entityManager)
 {
-	m_entityManager = entityManager;
+	m_pEntityManager = entityManager;
 }

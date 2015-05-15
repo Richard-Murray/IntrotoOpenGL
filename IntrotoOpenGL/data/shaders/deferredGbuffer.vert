@@ -2,10 +2,12 @@
 
 layout(location = 0) in vec4 Position;
 layout(location = 1) in vec4 Normal;
+layout(location = 2) in vec2 TexCoord;
 
 // view-space normal and position
 out vec4 vPosition;
 out vec4 vNormal;
+out vec2 vTexCoord;
 
 uniform mat4 View; // needed in addition to Projection * View
 uniform mat4 ProjectionView;
@@ -17,6 +19,7 @@ void main()
 	vPosition = View * Position;
 	//vNormal = Normal;
 	vNormal = normalize(View * Normal);
+	vTexCoord = TexCoord;
 	
 	gl_Position = ProjectionView * WorldTransform * Position;
 }

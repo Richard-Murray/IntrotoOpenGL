@@ -15,7 +15,7 @@
 #include <stb_image.h>
 #include "tiny_obj_loader.h"
 
-#include "ModelManager.h"
+#include "AssetManager.h"
 
 using glm::vec3;
 using glm::vec4;
@@ -85,7 +85,9 @@ int Application7::Run()
 		glfwPollEvents();
 	}
 
-	//delete m_meshArray;
+	delete m_entityManager;
+	delete m_assetManager;
+	delete m_renderer;
 	delete m_camera;
 
 	Gizmos::destroy();
@@ -114,10 +116,29 @@ void Application7::Load()
 	m_camera->SetUpPerspective(glm::pi<float>() * 0.25f, 16 / 9.f, 0.1f, 10000.f);
 
 	m_renderer = new Renderer(m_camera, m_window);
-	m_renderer->Load();
+
+	m_assetManager = new AssetManager(m_renderer);
+	m_assetManager->Initialise();
+
+	m_assetManager->LoadShader("GeometryPass", "./data/shaders/deferredGbuffer.vert", "./data/shaders/deferredGbuffer.frag");
+	m_assetManager->LoadShader("LightingPass", "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
+	m_assetManager->LoadShader("CompositePass", "./data/shaders/deferredComposite.vert", "./data/shaders/deferredComposite.frag");
+
+	m_assetManager->LoadModel("Cube1", "data/models/Cube.fbx");
+	m_assetManager->LoadModel("Crate1", "data/models/Crate.fbx");
 
 	m_entityManager = new EntityManager();
 	m_renderer->AddEntityManager(m_entityManager);
+	m_renderer->AddAssetManager(m_assetManager);
+	m_renderer->Load();
+
 	m_entityManager->CreateEntity("Test1");
-	m_entityManager->GetNewEntity()->AttachModel(m_renderer->GetModelManager()->GetModel("Cube1"));
+	m_entityManager->GetNewEntity()->Initialise(m_assetManager);
+	m_entityManager->GetNewEntity()->AttachModel("Cube1");
+	m_entityManager->GetNewEntity()->AttachShader("GeometryPass");
+
+	m_entityManager->CreateEntity("Test2");
+	m_entityManager->GetNewEntity()->Initialise(m_assetManager);
+	m_entityManager->GetNewEntity()->AttachModel("Crate1");
+	m_entityManager->GetNewEntity()->AttachShader("GeometryPass");
 }

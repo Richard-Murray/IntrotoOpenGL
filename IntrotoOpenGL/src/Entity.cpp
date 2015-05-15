@@ -11,15 +11,22 @@ Entity::~Entity()
 
 }
 
-void Entity::AttachModel(Model* pModel)
+void Entity::Initialise(AssetManager* assetManager)
 {
-	m_model = pModel;
+	m_pAssetManager = assetManager;
+	m_diffuseTexture = m_pAssetManager->GetTexture("Default");
+	m_attachedDiffuse = true;
+}
+
+void Entity::AttachModel(const char* idName)
+{
+	m_model = m_pAssetManager->GetModel(idName);
 	m_attachedModel = true;
 }
 
-void Entity::AttachShader(unsigned int shader)
+void Entity::AttachShader(const char* idName)
 {
-	m_shaderProgram = shader;
+	m_shaderProgram = m_pAssetManager->GetShader(idName);
 	m_attachedShader = true;
 }
 
@@ -40,13 +47,18 @@ void Entity::Draw(BaseCamera* camera)
 	{
 		glUseProgram(m_shaderProgram);
 
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_diffuseTexture);
+
 		unsigned int projectionViewUniform = glGetUniformLocation(m_shaderProgram, "ProjectionView");
 		unsigned int viewUniform = glGetUniformLocation(m_shaderProgram, "View");
 		unsigned int worldTransformUniform = glGetUniformLocation(m_shaderProgram, "WorldTransform");
+		unsigned int diffuseUniform = glGetUniformLocation(m_shaderProgram, "Diffuse");
 
 		glUniformMatrix4fv(viewUniform, 1, GL_FALSE, &(camera->GetView()[0][0]));
 		glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
 		glUniformMatrix4fv(worldTransformUniform, 1, GL_FALSE, &(m_worldTransform[0][0]));
+		glUniform1i(diffuseUniform, 0);
 
 		m_model->DrawModel();
 	}

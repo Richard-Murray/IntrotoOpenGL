@@ -7,6 +7,7 @@
 #include <glm/ext.hpp>
 
 #include "Model.h"
+#include "AssetManager.h"
 
 class Entity
 {
@@ -14,8 +15,10 @@ public:
 	Entity(const char* idName);
 	~Entity();
 
-	void AttachModel(Model* pModel);
-	void AttachShader(unsigned int shader);
+	void Initialise(AssetManager* pAssetManager);
+
+	void AttachModel(const char* idName);
+	void AttachShader(const char* idName);
 	void AttachTexture(unsigned int diffuseTexture);
 	void Update(float deltaTime);
 	void Draw(BaseCamera* camera);
@@ -28,6 +31,8 @@ private:
 	glm::mat4 m_worldTransform;
 
 	const char* m_idName;
+
+	AssetManager* m_pAssetManager;
 	
 	Model* m_model;
 	unsigned int m_shaderProgram;

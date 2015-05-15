@@ -22,7 +22,7 @@
 
 class Entity;
 
-class ModelManager;
+class AssetManager;
 class EntityManager;
 
 class Renderer
@@ -44,40 +44,43 @@ public:
 	void CreateShader(unsigned int &shader, const char* vert, const char* geom, const char* frag);
 
 	void LoadTexture(unsigned int &texture, const char* path);
+	void LoadTextureRGBA(unsigned int &texture, const char* path);
 
 	void CreateOpenGLBuffers(FBXFile* fbx);
 	void CleanupOpenGLBuffers(FBXFile* fbx);
 
-	void AddEntityManager(EntityManager* m_entityManager);
-
-	ModelManager* GetModelManager();
-
-private:
-	ModelManager* m_modelManager;
-	EntityManager* m_entityManager;
+	void AddEntityManager(EntityManager* entityManager);
+	void AddAssetManager(AssetManager* assetManager);
 
 private:
+	AssetManager* m_pAssetManager;
+	EntityManager* m_pEntityManager;
+
+private:
+
+	//DEFAULTS
+	unsigned int m_defaultTexture;
 
 	//SHADERS
-	unsigned int m_programObjID;
-	unsigned int m_programTexturePlaneID;
-	unsigned int m_programTexturePlaneSimpleID;
-
-	unsigned int m_programShadowMapID;
-	unsigned int m_programShadowMeshID;
+	//unsigned int m_programObjID;
+	//unsigned int m_programTexturePlaneID;
+	//unsigned int m_programTexturePlaneSimpleID;
+	//
+	//unsigned int m_programShadowMapID;
+	//unsigned int m_programShadowMeshID;
 
 	unsigned int m_programGeometryBufferID;
 	unsigned int m_programDirectionalLightID;
 	unsigned int m_programCompositeID;
 
-	unsigned int m_programPostProcessID;
-
-	unsigned int m_programTerrainID;
+	//unsigned int m_programPostProcessID;
+	//
+	//unsigned int m_programTerrainID;
 
 	unsigned int m_VAO;
 	unsigned int m_VBO;
 	unsigned int m_IBO;		
-
+	
 	//ParticleEmitter* m_particleEmitter;
 	GPUParticleEmitter* m_gpuParticleEmitter;
 
@@ -154,7 +157,7 @@ private:
 	void DrawCompositePass(BaseCamera* camera);
 	
 	//Postprocess
-	RenderTarget* m_pPostProcessRenderTarget;
+	//RenderTarget* m_pPostProcessRenderTarget;
 	void CreateFullScreenQuad();
 	unsigned int m_VAOfullScreenQuad;
 

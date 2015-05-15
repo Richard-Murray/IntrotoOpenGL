@@ -17,6 +17,9 @@
 
 #include "Renderer.h"
 #include "EntityManager.h"
+#include "AssetManager.h"
+
+#include "Loader.h"
 
 //class MeshArray;
 class FlyCamera;
@@ -50,6 +53,7 @@ private:
 	GLFWwindow* m_window;
 
 	EntityManager* m_entityManager;
+	AssetManager* m_assetManager;
 	
 };
 
