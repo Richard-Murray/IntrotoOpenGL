@@ -24,6 +24,7 @@ class Entity;
 
 class AssetManager;
 class EntityManager;
+class CheckersManager;
 
 class Renderer
 {
@@ -52,9 +53,13 @@ public:
 	void AddEntityManager(EntityManager* entityManager);
 	void AddAssetManager(AssetManager* assetManager);
 
+	void AddCheckersManager(CheckersManager* checkersManager);
+
 private:
 	AssetManager* m_pAssetManager;
 	EntityManager* m_pEntityManager;
+
+	CheckersManager* m_pCheckersManager;
 
 private:
 

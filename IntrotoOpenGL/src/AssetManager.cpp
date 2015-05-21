@@ -9,7 +9,7 @@ AssetManager::~AssetManager()
 {
 	for (auto iter = m_modelList.begin(); iter != m_modelList.end(); iter++)
 	{
-		m_modelList.clear(); //
+		delete (*iter);
 	}
 }
 

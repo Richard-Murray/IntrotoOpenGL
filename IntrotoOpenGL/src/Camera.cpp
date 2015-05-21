@@ -232,7 +232,7 @@ void FlyCamera::HandleMouseInput(double dt)
 			SetTransform(transform);
 			
 
-			std::cout << xOffset << " " << yOffset << std::endl;
+			//std::cout << xOffset << " " << yOffset << std::endl;
 
 			
 		}

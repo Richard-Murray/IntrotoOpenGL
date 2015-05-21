@@ -19,13 +19,17 @@ public:
 
 	void AttachModel(const char* idName);
 	void AttachShader(const char* idName);
-	void AttachTexture(unsigned int diffuseTexture);
-	void Update(float deltaTime);
-	void Draw(BaseCamera* camera);
+	void AttachTexture(const char* idName);
+	virtual void Update(float deltaTime);
+	virtual void Draw(BaseCamera* camera);
 
+	void SetWorldTransform(glm::mat4 transform);
 	void TestMoveTransform(glm::mat4 transform);
 
 	const char* GetID();
+
+	void Hide();
+	void Show();
 
 private:
 	glm::mat4 m_worldTransform;
@@ -41,6 +45,8 @@ private:
 	bool m_attachedModel = false;
 	bool m_attachedShader = false;
 	bool m_attachedDiffuse = false;
+
+	bool m_hidden = false;
 };
 
 #endif

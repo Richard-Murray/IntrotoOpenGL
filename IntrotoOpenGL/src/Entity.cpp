@@ -30,9 +30,15 @@ void Entity::AttachShader(const char* idName)
 	m_attachedShader = true;
 }
 
-void Entity::AttachTexture(unsigned int diffuseTexture)
+//void Entity::AttachTexture(unsigned int diffuseTexture)
+//{
+//	m_diffuseTexture = diffuseTexture;
+//	m_attachedDiffuse = true;
+//}
+
+void Entity::AttachTexture(const char* idName)
 {
-	m_diffuseTexture = diffuseTexture;
+	m_diffuseTexture = m_pAssetManager->GetTexture(idName);
 	m_attachedDiffuse = true;
 }
 
@@ -43,7 +49,7 @@ void Entity::Update(float deltaTime)
 
 void Entity::Draw(BaseCamera* camera)
 {
-	if (m_attachedModel == true && m_attachedShader == true)
+	if (m_attachedModel == true && m_attachedShader == true && !m_hidden)
 	{
 		glUseProgram(m_shaderProgram);
 
@@ -64,6 +70,11 @@ void Entity::Draw(BaseCamera* camera)
 	}
 }
 
+void Entity::SetWorldTransform(glm::mat4 transform)
+{
+	m_worldTransform = transform;
+}
+
 void Entity::TestMoveTransform(glm::mat4 transform)
 {
 	m_worldTransform = m_worldTransform * transform;
@@ -72,4 +83,14 @@ void Entity::TestMoveTransform(glm::mat4 transform)
 const char* Entity::GetID()
 {
 	return m_idName;
+}
+
+void Entity::Hide()
+{
+	m_hidden = true;
+}
+
+void Entity::Show()
+{
+	m_hidden = false;
 }

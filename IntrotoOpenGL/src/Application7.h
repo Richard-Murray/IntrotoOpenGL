@@ -21,6 +21,8 @@
 
 #include "Loader.h"
 
+#include "Checkers.h"
+
 //class MeshArray;
 class FlyCamera;
 struct OpenGLInfo;
@@ -54,6 +56,8 @@ private:
 
 	EntityManager* m_entityManager;
 	AssetManager* m_assetManager;
+
+	CheckersManager* m_checkersManager;
 	
 };
 

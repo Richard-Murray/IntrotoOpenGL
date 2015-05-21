@@ -2,6 +2,7 @@
 #include "AssetManager.h"
 #include "Entity.h"
 #include "EntityManager.h"
+#include "Checkers.h"
 
 using glm::vec2;
 using glm::vec3;
@@ -401,7 +402,8 @@ void Renderer::DrawGeometryPass(BaseCamera* camera)
 	//m_modelManager->GetModel("BedSet")->DrawModel();
 	//m_modelManager->GetModel("Cube1")->DrawModel();
 
-	m_pEntityManager->Draw(camera);
+	//m_pEntityManager->Draw(camera);
+	m_pCheckersManager->Draw(camera);
 
 	//m_entityTest->Draw(camera);
 	//m_entity2Test->Draw(camera);
@@ -1110,4 +1112,9 @@ void Renderer::AddAssetManager(AssetManager* assetManager)
 void Renderer::AddEntityManager(EntityManager* entityManager)
 {
 	m_pEntityManager = entityManager;
+}
+
+void Renderer::AddCheckersManager(CheckersManager* checkersManager)
+{
+	m_pCheckersManager = checkersManager;
 }

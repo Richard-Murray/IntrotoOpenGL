@@ -85,6 +85,7 @@ int Application7::Run()
 		glfwPollEvents();
 	}
 
+	delete m_checkersManager;
 	delete m_entityManager;
 	delete m_assetManager;
 	delete m_renderer;
@@ -102,6 +103,7 @@ void Application7::Update(float deltaTime)
 	m_renderer->Update(deltaTime);
 	m_camera->Update(deltaTime);
 	m_entityManager->Update(deltaTime);
+	m_checkersManager->Update(deltaTime);
 }
 
 void Application7::Draw()
@@ -127,6 +129,9 @@ void Application7::Load()
 	m_assetManager->LoadModel("Cube1", "data/models/Cube.fbx");
 	m_assetManager->LoadModel("Crate1", "data/models/Crate.fbx");
 
+	m_assetManager->LoadTexture("Snow", "data/textures/snow.jpg");
+	m_assetManager->LoadTexture("Rock", "data/textures/rock.jpg");
+
 	m_entityManager = new EntityManager();
 	m_renderer->AddEntityManager(m_entityManager);
 	m_renderer->AddAssetManager(m_assetManager);
@@ -141,4 +146,9 @@ void Application7::Load()
 	m_entityManager->GetNewEntity()->Initialise(m_assetManager);
 	m_entityManager->GetNewEntity()->AttachModel("Crate1");
 	m_entityManager->GetNewEntity()->AttachShader("GeometryPass");
+
+	m_checkersManager = new CheckersManager(m_assetManager);
+	m_renderer->AddCheckersManager(m_checkersManager);
+	//m_checkersGame = new CheckersGame();
+	//m_checkerModels = new Checker[8][8]();
 }
