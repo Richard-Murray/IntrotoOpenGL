@@ -7,8 +7,6 @@
 CheckersManager::CheckersManager(AssetManager* assetManager)
 {
 	m_checkersBoard = new CheckersBoard();
-	m_clonedCheckersBoard = new CheckersBoard();
-	m_clonedCheckersBoard->m_parentCheckersBoard = m_checkersBoard;
 	m_assetManager = assetManager;
 
 	for (int row = 0; row < 8; row++)
@@ -34,12 +32,13 @@ CheckersManager::CheckersManager(AssetManager* assetManager)
 
 CheckersManager::~CheckersManager()
 {
-	delete m_clonedCheckersBoard;
-	delete m_checkersBoard;
+
 }
 
 void CheckersManager::Update(float deltaTime)
 {
+	m_checkersBoard->PromoteKings();
+
 	m_moveTimer += deltaTime;
 
 	for (auto iter = m_checkerModels.begin(); iter != m_checkerModels.end(); iter++)
@@ -48,86 +47,20 @@ void CheckersManager::Update(float deltaTime)
 		iter->Update(deltaTime);
 	}
 
-	//m_checkersBoard->GetValidActions(PLAYER::PLAYERONE);
-	//if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 0 && m_currentPlayer == PLAYER::PLAYERONE)
-	//{
-	//	m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
-	//	m_moveTimer = 0;
-	//	m_currentPlayer = PLAYER::PLAYERTWO;
-	//}
-	//else
-	//{
-	//	//loses because there's no more moves
-	//}
-	//m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
-	//if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 0 && m_currentPlayer == PLAYER::PLAYERTWO)
-	//{
-	//	m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
-	//	m_moveTimer = 0;
-	//	m_currentPlayer = PLAYER::PLAYERONE;
-	//}
-	//else
-	//{
-	//	//loses because there's no more moves
-	//}
-
 	m_checkersBoard->GetValidActions(PLAYER::PLAYERONE);
-	if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERONE)
+	if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer > 0.2f && m_currentPlayer == PLAYER::PLAYERONE)
 	{
-		m_checkersBoard->RemoveNonJumpMoves();
 		m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
 		m_moveTimer = 0;
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
-	}
-	else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERONE)
-	{
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
-		//loses because there's no more moves
+		m_currentPlayer = PLAYER::PLAYERTWO;
 	}
 	m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
-	if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+	if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer > 0.2f && m_currentPlayer == PLAYER::PLAYERTWO)
 	{
-		m_checkersBoard->RemoveNonJumpMoves();
-		for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
-		{
-			m_clonedCheckersBoard->Copy(m_checkersBoard);
-			m_clonedCheckersBoard->ApplyAction((*iter));
-			m_clonedCheckersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-			for (int i = 0; i < m_testGameNumber; i++)
-			{
-				(*iter)->m_score += m_clonedCheckersBoard->PlayRandomisedGame();
-			}
-		}
-
-		Action* chosenAction = m_checkersBoard->m_listOfActions[0];
-		for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
-		{
-			if ((*iter)->m_score > chosenAction->m_score)
-			{
-				chosenAction = (*iter);
-			}
-		}
-
-		m_checkersBoard->ApplyAction(chosenAction);
+		m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
 		m_moveTimer = 0;
-		
-		//m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
-		//m_moveTimer = 0;
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+		m_currentPlayer = PLAYER::PLAYERONE;
 	}
-	else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
-	{
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-		//loses because there's no more moves
-	}
-
-
-	//if (m_moveTimer < 1)
-	//{
-	//	m_checkersBoard->PlayRandomisedGame();
-	//}
-
-	m_checkersBoard->PromoteKings();
 }
 
 void CheckersManager::Draw(BaseCamera* camera)
@@ -185,13 +118,7 @@ CheckersBoard::CheckersBoard()
 
 CheckersBoard::~CheckersBoard()
 {
-	if (m_listOfActions.size() > 0)
-	{
-		for (int i = m_listOfActions.size(); i > 0; i--)
-		{
-			m_listOfActions.pop_back();
-		}
-	}
+	
 }
 
 void CheckersBoard::GetValidActions(PLAYER player)
@@ -230,7 +157,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 						m_listOfActions.push_back(new Action());
 						m_listOfActions.back()->SetRegularMove(row, col, row + 1, col - 1, player, GetPieceValue(row, col));
 					}
-					else if (GetPieceValue(row + 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col - 1) == BOARD::REDKING)
+					else if (GetPieceValue(row + 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col + 1) == BOARD::REDKING)
 					{
 						if (row + 2 < 8 && col - 2 >= 0 && GetPieceValue(row + 2, col - 2) == BOARD::NONE)
 						{
@@ -251,7 +178,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 							m_listOfActions.push_back(new Action());
 							m_listOfActions.back()->SetRegularMove(row, col, row - 1, col + 1, player, GetPieceValue(row, col));
 						}
-						else if (GetPieceValue(row - 1, col + 1) == BOARD::REDPIECE || GetPieceValue(row - 1, col + 1) == BOARD::REDKING)
+						else if (GetPieceValue(row - 1, col + 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col + 1) == BOARD::REDKING)
 						{
 							if (row - 2 >= 0 && col + 2 < 8 && GetPieceValue(row - 2, col + 2) == BOARD::NONE)
 							{
@@ -269,7 +196,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 							m_listOfActions.push_back(new Action());
 							m_listOfActions.back()->SetRegularMove(row, col, row - 1, col - 1, player, GetPieceValue(row, col));
 						}
-						else if (GetPieceValue(row - 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row - 1, col - 1) == BOARD::REDKING)
+						else if (GetPieceValue(row - 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col + 1) == BOARD::REDKING)
 						{
 							if (row - 2 >= 0 && col - 2 >= 0 && GetPieceValue(row - 2, col - 2) == BOARD::NONE)
 							{
@@ -292,7 +219,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 						m_listOfActions.push_back(new Action());
 						m_listOfActions.back()->SetRegularMove(row, col, row - 1, col + 1, player, GetPieceValue(row, col));
 					}
-					else if (GetPieceValue(row - 1, col + 1) == BOARD::BLUEPIECE || GetPieceValue(row - 1, col + 1) == BOARD::BLUEKING)
+					else if (GetPieceValue(row - 1, col + 1) == BOARD::BLUEPIECE || GetPieceValue(row + 1, col + 1) == BOARD::BLUEKING)
 					{
 						if (row - 2 >= 0 && col + 2 < 8 && GetPieceValue(row - 2, col + 2) == BOARD::NONE)
 						{
@@ -310,7 +237,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 						m_listOfActions.push_back(new Action());
 						m_listOfActions.back()->SetRegularMove(row, col, row - 1, col - 1, player, GetPieceValue(row, col));
 					}
-					else if (GetPieceValue(row - 1, col - 1) == BOARD::BLUEPIECE || GetPieceValue(row - 1, col - 1) == BOARD::BLUEKING)
+					else if (GetPieceValue(row - 1, col - 1) == BOARD::BLUEPIECE || GetPieceValue(row + 1, col + 1) == BOARD::BLUEKING)
 					{
 						if (row - 2 >= 0 && col - 2 >= 0 && GetPieceValue(row - 2, col - 2) == BOARD::NONE)
 						{
@@ -330,7 +257,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 							m_listOfActions.push_back(new Action());
 							m_listOfActions.back()->SetRegularMove(row, col, row + 1, col + 1, player, GetPieceValue(row, col));
 						}
-						else if (GetPieceValue(row + 1, col + 1) == BOARD::BLUEPIECE || GetPieceValue(row + 1, col + 1) == BOARD::BLUEKING)
+						else if (GetPieceValue(row + 1, col + 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col + 1) == BOARD::REDKING)
 						{
 							if (row + 2 < 8 && col + 2 < 8 && GetPieceValue(row + 2, col + 2) == BOARD::NONE)
 							{
@@ -348,7 +275,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 							m_listOfActions.push_back(new Action());
 							m_listOfActions.back()->SetRegularMove(row, col, row + 1, col - 1, player, GetPieceValue(row, col));
 						}
-						else if (GetPieceValue(row + 1, col - 1) == BOARD::BLUEPIECE || GetPieceValue(row + 1, col - 1) == BOARD::BLUEKING)
+						else if (GetPieceValue(row + 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col + 1) == BOARD::REDKING)
 						{
 							if (row + 2 < 8 && col - 2 >= 0 && GetPieceValue(row + 2, col - 2) == BOARD::NONE)
 							{
@@ -443,183 +370,6 @@ void CheckersBoard::PromoteKings()
 
 void CheckersBoard::Copy(CheckersBoard* checkersBoard)
 {
-	m_currentPlayer = checkersBoard->m_currentPlayer;
-
-	//m_listOfActions.clear();
-	if (m_listOfActions.size() > 0)
-	{
-		for (int i = m_listOfActions.size(); i > 0; i--)
-		{
-			m_listOfActions.pop_back();
-		}
-	}
-
-	for (auto iter = checkersBoard->m_listOfActions.begin(); iter < checkersBoard->m_listOfActions.end(); iter++)
-	{
-		m_listOfActions.push_back((*iter)->Clone());
-	}
-
-	for (int row = 0; row < 8; row++)
-	{
-		for (int col = 0; col < 8; col++)
-		{
-			SetPieceValue(row, col, checkersBoard->GetPieceValue(row, col));
-		}
-	}
-}
-
-float CheckersBoard::PlayRandomisedGame()
-{
-	Copy(m_parentCheckersBoard);
-	
-	srand(glfwGetTime() + rand());
-
-	float value = 0;
-
-	int bothPlayersStuck = 0;
-	int maxNumberOfMoves = 100;
-	int numberOfMoves = 0;
-
-	int initialBluePieces = PiecesLeftForPlayer(PLAYER::PLAYERONE);
-	int initialRedPieces = PiecesLeftForPlayer(PLAYER::PLAYERTWO);
-
-	while (value == 0)
-	{
-
-		bothPlayersStuck = 0;
-
-		GetValidActions(PLAYER::PLAYERONE);
-		if (m_listOfActions.size() > 0  && m_currentPlayer == PLAYER::PLAYERONE)
-		{
-			RemoveNonJumpMoves();
-			ApplyAction(m_listOfActions[rand() % m_listOfActions.size()]);
-			m_currentPlayer = PLAYER::PLAYERTWO;
-		}
-		else if (m_currentPlayer == PLAYER::PLAYERONE)
-		{
-			if (!PiecesLeftForPlayer(PLAYER::PLAYERONE) > 0)
-			{
-				value++;
-				break;
-			}
-			else
-			{
-				bothPlayersStuck++;
-				m_currentPlayer = PLAYER::PLAYERTWO;
-			}
-		}
-		GetValidActions(PLAYER::PLAYERTWO);
-		if (m_listOfActions.size() > 0 && m_currentPlayer == PLAYER::PLAYERTWO)
-		{
-			RemoveNonJumpMoves();
-			ApplyAction(m_listOfActions[rand() % m_listOfActions.size()]);
-			m_currentPlayer = PLAYER::PLAYERONE;
-		}
-		else if (m_currentPlayer == PLAYER::PLAYERTWO)
-		{
-			if (!PiecesLeftForPlayer(PLAYER::PLAYERTWO) > 0)
-			{
-				value--;
-				break;
-			}
-			else
-			{
-				bothPlayersStuck++;
-				m_currentPlayer = PLAYER::PLAYERONE;
-			}
-		}
-
-		if (bothPlayersStuck == 2)
-		{
-			value--;
-			break;
-		}
-
-		PromoteKings();
-
-		numberOfMoves++;
-		if (numberOfMoves > maxNumberOfMoves)
-		{
-			if (PiecesLeftForPlayer(PLAYER::PLAYERTWO) - initialRedPieces > PiecesLeftForPlayer(PLAYER::PLAYERONE) - initialBluePieces)
-			{
-				value++;
-			}
-			else
-			{
-				value--;
-			}
-			return value;
-		}
-
-		if (value != 0)
-			return value;
-	}
-
-	return value;
-}
-
-int CheckersBoard::PiecesLeftForPlayer(PLAYER player)
-{
-	int pieceLeft = 0;
-
-	for (int row = 0; row < 8; row++)
-	{
-		for (int col = 0; col < 8; col++)
-		{
-			if (player == PLAYER::PLAYERONE)
-			{
-				if (GetPieceValue(row, col) == (BOARD::BLUEPIECE || BOARD::BLUEKING))
-				{
-					pieceLeft++;
-				}
-			}
-			if (player == PLAYER::PLAYERTWO)
-			{
-				if (GetPieceValue(row, col) == (BOARD::REDPIECE || BOARD::REDKING))
-				{
-					pieceLeft++;
-				}
-			}
-		}
-	}
-
-	return pieceLeft;
-}
-
-void CheckersBoard::RemoveNonJumpMoves()
-{
-	bool isJump = false;
-
-	for (auto iter = m_listOfActions.begin(); iter < m_listOfActions.end(); iter++)
-	{
-		if ((*iter)->m_isJump)
-		{
-			isJump = true;
-			break;
-		}
-	}
-
-	if (isJump == true)
-	{
-		/*for (auto iter = m_listOfActions.begin(); iter < m_listOfActions.end(); iter++)
-		{
-			if ((*iter)->m_isJump == false)
-			{
-				m_listOfActions.erase(iter);
-				iter--;
-			}
-		}*/
-
-		for (int i = 0; i < m_listOfActions.size(); i++)
-		{
-			if (m_listOfActions[i]->m_isJump == false)
-			{
-				m_listOfActions.erase(m_listOfActions.begin() + i);
-				i--;
-			}
-		}
-		
-	}
 
 }
 
@@ -700,22 +450,4 @@ void Action::SetJumpMove(int startRow, int startCol, int endRow, int endCol, PLA
 	m_isJump = true;
 	m_player = player;
 	m_checkerType = checkerType;
-}
-
-Action* Action::Clone()
-{
-	Action* actionClone;
-	actionClone = new Action(); //
-	
-	actionClone->m_startRow = m_startRow;
-	actionClone->m_startCol = m_startCol;
-	actionClone->m_endRow = m_endRow;
-	actionClone->m_endCol = m_endCol;
-	actionClone->m_jumpedRow = m_jumpedRow;
-	actionClone->m_jumpedCol = m_jumpedCol;
-	actionClone->m_isJump = m_isJump;
-	actionClone->m_player = m_player;
-	actionClone->m_checkerType;
-
-	return actionClone;
 }
