@@ -4,12 +4,13 @@
 #include <string>
 
 //CheckerManager
-CheckersManager::CheckersManager(AssetManager* assetManager)
+CheckersManager::CheckersManager(AssetManager* assetManager, GLFWwindow* window)
 {
 	m_checkersBoard = new CheckersBoard();
 	m_clonedCheckersBoard = new CheckersBoard();
 	m_clonedCheckersBoard->m_parentCheckersBoard = m_checkersBoard;
 	m_assetManager = assetManager;
+	m_window = window;
 
 	for (int row = 0; row < 8; row++)
 	{
@@ -28,6 +29,28 @@ CheckersManager::CheckersManager(AssetManager* assetManager)
 			transform[3] = glm::vec4(row * 1.1f, 0, col * 1.1f, 1);
 			//transform = transform * glm::vec4(glm::vec3(row * 10, col * 10, -5), 1);
 			m_checkerModels.back().SetWorldTransform(transform);
+			m_checkersboardEntities.emplace_back(s.c_str());
+			m_checkersboardEntities.back().Initialise(m_assetManager);
+			m_checkersboardEntities.back().AttachModel("Cube1");
+			m_checkersboardEntities.back().AttachShader("GeometryPass");
+			if (col % 2 && row % 2)
+			{
+				m_checkersboardEntities.back().AttachTexture("Black");
+			}
+			else if (!(row % 2) && !(col % 2))
+			{
+				m_checkersboardEntities.back().AttachTexture("Black");
+			}
+			else
+			{
+				m_checkersboardEntities.back().AttachTexture("White");
+			}
+
+			transform[0] = glm::vec4(1.1f, 0, 0, 0);
+			transform[1] = glm::vec4(0, 1.1f, 0, 0);
+			transform[2] = glm::vec4(0, 0, 1.1f, 0);
+			transform[3] = glm::vec4(row * 1.1f, -1, col * 1.1f, 1);
+			m_checkersboardEntities.back().SetWorldTransform(transform);
 		}
 	}
 }
@@ -45,6 +68,24 @@ void CheckersManager::Update(float deltaTime)
 	for (auto iter = m_checkerModels.begin(); iter != m_checkerModels.end(); iter++)
 	{
 		iter->SetPieceType(GetPieceValue(iter->GetPieceRow(), iter->GetPieceColumn()));
+		if (m_checkersBoard->m_currentPlayer == PLAYER::PLAYERONE && m_validActionsRetrieved == true)
+		{
+			if ((iter->GetPieceRow() == m_checkersBoard->m_listOfActions[m_selectedMove]->m_endRow && 
+				iter->GetPieceColumn() == m_checkersBoard->m_listOfActions[m_selectedMove]->m_endCol) ||
+				(iter->GetPieceRow() == m_checkersBoard->m_listOfActions[m_selectedMove]->m_startRow &&
+				iter->GetPieceColumn() == m_checkersBoard->m_listOfActions[m_selectedMove]->m_startCol))
+			{
+				iter->Select(true);
+			}
+			else
+			{
+				iter->Select(false);
+			}
+		}
+		else
+		{
+			iter->Select(false);
+		}
 		iter->Update(deltaTime);
 	}
 
@@ -71,54 +112,122 @@ void CheckersManager::Update(float deltaTime)
 	//	//loses because there's no more moves
 	//}
 
-	m_checkersBoard->GetValidActions(PLAYER::PLAYERONE);
-	if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERONE)
+	//Player controlled side
+	if (m_checkersBoard->m_currentPlayer == PLAYER::PLAYERONE)
 	{
-		m_checkersBoard->RemoveNonJumpMoves();
-		m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
-		m_moveTimer = 0;
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
-	}
-	else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERONE)
-	{
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
-		//loses because there's no more moves
-	}
-	m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
-	if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
-	{
-		m_checkersBoard->RemoveNonJumpMoves();
-		for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+		if (m_validActionsRetrieved == false)
 		{
-			m_clonedCheckersBoard->Copy(m_checkersBoard);
-			m_clonedCheckersBoard->ApplyAction((*iter));
-			m_clonedCheckersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-			for (int i = 0; i < m_testGameNumber; i++)
+			m_checkersBoard->GetValidActions(PLAYER::PLAYERONE);
+			m_checkersBoard->RemoveNonJumpMoves();
+			m_selectedMove = 0;
+			if (m_checkersBoard->m_listOfActions.size() > 0)
 			{
-				(*iter)->m_score += m_clonedCheckersBoard->PlayRandomisedGame();
+				m_validActionsRetrieved = true;
+				//lose game
 			}
 		}
 
-		Action* chosenAction = m_checkersBoard->m_listOfActions[0];
-		for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+		if (m_checkersBoard->m_listOfActions.size() > 0)
 		{
-			if ((*iter)->m_score > chosenAction->m_score)
+			if (glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS && m_selectedMove > 0 && m_inputLastFrame == false)
 			{
-				chosenAction = (*iter);
+				m_selectedMove--;
+				m_inputLastFrame = true;
+			}
+			if (glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS && m_selectedMove < m_checkersBoard->m_listOfActions.size() - 1 && m_inputLastFrame == false)
+			{
+				m_selectedMove++;
+				m_inputLastFrame = true;
+			}
+			if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS && m_inputLastFrame == false)
+			{
+				m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[m_selectedMove]);
+				m_moveTimer = 0;
+				m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+				m_validActionsRetrieved = false;
+				m_inputLastFrame = true;
+			}
+			if (m_inputLastFrame == true && !((glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS) || (glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS) || (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)))
+			{
+				m_inputLastFrame = false;
 			}
 		}
-
-		m_checkersBoard->ApplyAction(chosenAction);
-		m_moveTimer = 0;
 		
-		//m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
-		//m_moveTimer = 0;
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+		//if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1)
+		//{
+		//	m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
+		//	m_moveTimer = 0;
+		//	m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+		//}
+		//else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1)
+		//{
+		//	m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+		//	//loses because there's no more moves
+		
 	}
-	else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+
+	//m_checkersBoard->GetValidActions(PLAYER::PLAYERONE);
+	//if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1)
+	//{
+	//	m_checkersBoard->RemoveNonJumpMoves();
+	//	m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
+	//	m_moveTimer = 0;
+	//	m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+	//}
+	//else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1)
+	//{
+	//	m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+	//	//loses because there's no more moves
+	//}
+
+	//AI controlled side
+	if (m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
 	{
-		m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-		//loses because there's no more moves
+		m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
+		if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+		{
+			m_checkersBoard->RemoveNonJumpMoves();
+			for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+			{
+				m_clonedCheckersBoard->Copy(m_checkersBoard);
+				m_clonedCheckersBoard->ApplyAction((*iter));
+				m_clonedCheckersBoard->GetValidActions(PLAYER::PLAYERONE); //Purely to check if a piece moves into check
+				bool movesIntoCheck = false;
+				if (m_clonedCheckersBoard->CheckForJumpMoves() == true)
+				{
+					movesIntoCheck = true;
+				}
+				m_clonedCheckersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+				for (int i = 0; i < m_testGameNumber; i++)
+				{
+					(*iter)->m_score += m_clonedCheckersBoard->PlayRandomisedGame();
+				}
+
+				if (movesIntoCheck == true)
+					(*iter)->m_score -= 25;
+			}
+
+			Action* chosenAction = m_checkersBoard->m_listOfActions[0];
+			for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+			{
+				if ((*iter)->m_score > chosenAction->m_score)
+				{
+					chosenAction = (*iter);
+				}
+			}
+
+			m_checkersBoard->ApplyAction(chosenAction);
+			m_moveTimer = 0;
+
+			//m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
+			//m_moveTimer = 0;
+			m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+		}
+		else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+		{
+			m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+			//loses because there's no more moves
+		}
 	}
 
 
@@ -133,6 +242,10 @@ void CheckersManager::Update(float deltaTime)
 void CheckersManager::Draw(BaseCamera* camera)
 {
 	for (auto iter = m_checkerModels.begin(); iter != m_checkerModels.end(); iter++)
+	{
+		iter->Draw(camera);
+	}
+	for (auto iter = m_checkersboardEntities.begin(); iter != m_checkersboardEntities.end(); iter++)
 	{
 		iter->Draw(camera);
 	}
@@ -262,7 +375,7 @@ void CheckersBoard::GetValidActions(PLAYER player)
 					}
 
 					//check bottom left (king)
-					if (row - 1 >= 0 && col - 1 > 0)
+					if (row - 1 >= 0 && col - 1 >= 0)
 					{
 						if (GetPieceValue(row - 1, col - 1) == BOARD::NONE)
 						{
@@ -474,6 +587,7 @@ float CheckersBoard::PlayRandomisedGame()
 	
 	srand(glfwGetTime() + rand());
 
+	bool exitRandomGame = false;
 	float value = 0;
 
 	int bothPlayersStuck = 0;
@@ -483,7 +597,7 @@ float CheckersBoard::PlayRandomisedGame()
 	int initialBluePieces = PiecesLeftForPlayer(PLAYER::PLAYERONE);
 	int initialRedPieces = PiecesLeftForPlayer(PLAYER::PLAYERTWO);
 
-	while (value == 0)
+	while (exitRandomGame == false)
 	{
 
 		bothPlayersStuck = 0;
@@ -500,6 +614,7 @@ float CheckersBoard::PlayRandomisedGame()
 			if (!PiecesLeftForPlayer(PLAYER::PLAYERONE) > 0)
 			{
 				value++;
+				exitRandomGame = true;
 				break;
 			}
 			else
@@ -520,6 +635,7 @@ float CheckersBoard::PlayRandomisedGame()
 			if (!PiecesLeftForPlayer(PLAYER::PLAYERTWO) > 0)
 			{
 				value--;
+				exitRandomGame = true;
 				break;
 			}
 			else
@@ -529,11 +645,12 @@ float CheckersBoard::PlayRandomisedGame()
 			}
 		}
 
-		if (bothPlayersStuck == 2)
-		{
-			value--;
-			break;
-		}
+		//if (bothPlayersStuck == 2)
+		//{
+		//	value--;
+		//	exitRandomGame = true;
+		//	break;
+		//}
 
 		PromoteKings();
 
@@ -548,11 +665,23 @@ float CheckersBoard::PlayRandomisedGame()
 			{
 				value--;
 			}
-			return value;
+			exitRandomGame = true;
+		}
+		if (numberOfMoves == 5 || numberOfMoves == 20)
+		{
+			if (PiecesLeftForPlayer(PLAYER::PLAYERTWO) - initialRedPieces > PiecesLeftForPlayer(PLAYER::PLAYERONE) - initialBluePieces)
+			{
+				value++;
+			}
+			else
+			{
+				value--;
+			}
+			//return value;
 		}
 
-		if (value != 0)
-			return value;
+		//if (value != 0)
+		//	return value;
 	}
 
 	return value;
@@ -623,6 +752,21 @@ void CheckersBoard::RemoveNonJumpMoves()
 
 }
 
+bool CheckersBoard::CheckForJumpMoves()
+{
+	bool isJump = false;
+
+	for (auto iter = m_listOfActions.begin(); iter < m_listOfActions.end(); iter++)
+	{
+		if ((*iter)->m_isJump)
+		{
+			isJump = true;
+			return isJump;
+		}
+	}
+
+	return isJump;
+}
 
 //Checker
 void Checker::InitialiseChecker()
@@ -633,30 +777,48 @@ void Checker::InitialiseChecker()
 
 void Checker::Update(float deltaTime)
 {
-	if (m_pieceType == BOARD::NONE)
+	if (m_isSelected == false)
 	{
-		Hide();
+		if (m_pieceType == BOARD::NONE)
+		{
+			Hide();
+		}
+		else
+		{
+			Show();
+			if (m_pieceType == BOARD::BLUEPIECE)
+			{
+				AttachTexture("Blue");
+			}
+			if (m_pieceType == BOARD::REDPIECE)
+			{
+				AttachTexture("Red");
+			}
+			if (m_pieceType == BOARD::BLUEKING)
+			{
+				AttachTexture("Cyan");
+			}
+			if (m_pieceType == BOARD::REDKING)
+			{
+				AttachTexture("Orange");
+			}
+
+		}
+		glm::mat4 transform = GetWorldTransform();
+		transform[3][1] = 0;
+		SetWorldTransform(transform);
 	}
 	else
 	{
-		Show();
-		if (m_pieceType == BOARD::BLUEPIECE)
+		if (m_pieceType == BOARD::NONE)
 		{
-			AttachTexture("Snow");
-		}
-		if (m_pieceType == BOARD::REDPIECE)
-		{
-			AttachTexture("Rock");
-		}
-		if (m_pieceType == BOARD::BLUEKING)
-		{
-			AttachTexture("Snow");
-		}
-		if (m_pieceType == BOARD::REDKING)
-		{
-			AttachTexture("Rock");
+			Show();
+			AttachTexture("Gold");
 		}
 
+		glm::mat4 transform = GetWorldTransform();
+		transform[3][1] = (sinf(glfwGetTime() * 10 /*+ 1.2f*/) / 10 + 0.1f);
+		SetWorldTransform(transform);
 	}
 	//set piece's model
 }
@@ -670,6 +832,11 @@ void Checker::SetPieceLocation(int row, int col)
 {
 	m_row = row;
 	m_column = col;
+}
+
+void Checker::Select(bool isSelected)
+{
+	m_isSelected = isSelected;
 }
 
 int Checker::GetPieceRow()

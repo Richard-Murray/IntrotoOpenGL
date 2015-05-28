@@ -24,6 +24,7 @@ public:
 	virtual void Draw(BaseCamera* camera);
 
 	void SetWorldTransform(glm::mat4 transform);
+	glm::mat4 GetWorldTransform();
 	void TestMoveTransform(glm::mat4 transform);
 
 	const char* GetID();

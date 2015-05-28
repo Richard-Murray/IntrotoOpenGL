@@ -402,8 +402,31 @@ void Renderer::DrawGeometryPass(BaseCamera* camera)
 	//m_modelManager->GetModel("BedSet")->DrawModel();
 	//m_modelManager->GetModel("Cube1")->DrawModel();
 
-	//m_pEntityManager->Draw(camera);
+	m_pEntityManager->Draw(camera);
 	m_pCheckersManager->Draw(camera);
+
+	glUseProgram(m_programGeometryBufferID);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_pAssetManager->GetTexture("Snow"));
+
+	unsigned int projectionViewUniform = glGetUniformLocation(m_programGeometryBufferID, "ProjectionView");
+	unsigned int viewUniform = glGetUniformLocation(m_programGeometryBufferID, "View");
+	unsigned int worldTransformUniform = glGetUniformLocation(m_programGeometryBufferID, "WorldTransform");
+	unsigned int diffuseUniform = glGetUniformLocation(m_programGeometryBufferID, "Diffuse");
+
+	mat4 transform = mat4(1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		1, 1, 1, 1);
+
+	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, &(camera->GetView()[0][0]));
+	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
+	glUniformMatrix4fv(worldTransformUniform, 1, GL_FALSE, &(transform[0][0]));
+	glUniform1i(diffuseUniform, 0);
+
+	glBindVertexArray(m_VAOCube);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
 	//m_entityTest->Draw(camera);
 	//m_entity2Test->Draw(camera);
@@ -417,6 +440,7 @@ void Renderer::DrawLightPass(BaseCamera* camera)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
+	//Directional Lights
 	glUseProgram(m_programDirectionalLightID);
 
 	unsigned int positionTextureUniform = glGetUniformLocation(m_programDirectionalLightID,"positionTexture");
@@ -431,7 +455,28 @@ void Renderer::DrawLightPass(BaseCamera* camera)
 	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(2));
 
 	// draw lights as fullscreen quads
-	DrawDirectionalLight(glm::vec3(-1), glm::vec3(1));
+	DrawDirectionalLight(camera, glm::vec3(-1), glm::vec3(1));
+
+	//Point Lights
+	glUseProgram(m_programPointLightID);
+
+	positionTextureUniform = glGetUniformLocation(m_programPointLightID, "positionTexture");
+	normalTextureUniform = glGetUniformLocation(m_programPointLightID, "normalTexture");
+
+	glUniform1i(positionTextureUniform, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(1));
+
+	glUniform1i(normalTextureUniform, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(2));
+
+	glCullFace(GL_FRONT);
+
+	DrawPointLight(camera, vec3(sinf(glfwGetTime()) * 5, 3, cosf(glfwGetTime()) * 5), 5, vec3(1, 0, 0));
+	DrawPointLight(camera, vec3(2, 1, 2), 500, vec3(1, 0, 0));
+
+	glCullFace(GL_BACK);
 
 	glDisable(GL_BLEND);
 }
@@ -457,7 +502,7 @@ void Renderer::DrawCompositePass(BaseCamera* camera)
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void Renderer::DrawDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse)
+void Renderer::DrawDirectionalLight(BaseCamera* camera, const glm::vec3& direction, const glm::vec3& diffuse)
 {
 	glm::vec4 viewSpaceLight = m_camera->GetView() *glm::vec4(glm::normalize(direction), 0);
 
@@ -469,6 +514,24 @@ void Renderer::DrawDirectionalLight(const glm::vec3& direction, const glm::vec3&
 
 	glBindVertexArray(m_VAOfullScreenQuad);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void Renderer::DrawPointLight(BaseCamera* camera, const glm::vec3& position, float radius, const glm::vec3& diffuse)
+{
+	glm::vec4 viewSpacePosition = camera->GetView() * glm::vec4(position, 1);
+
+	unsigned int lightPositionUniform = glGetUniformLocation(m_programPointLightID, "lightPosition");
+	unsigned int lightPositionViewUniform = glGetUniformLocation(m_programPointLightID, "lightPositionView");
+	unsigned int lightRadiusUniform = glGetUniformLocation(m_programPointLightID, "lightRadius");
+	unsigned int lightDiffuseUniform = glGetUniformLocation(m_programPointLightID, "lightDiffuse");
+
+	glUniform3fv(lightPositionUniform, 1, &position[0]);	
+	glUniform3fv(lightPositionViewUniform, 1, &viewSpacePosition[0]);
+	glUniform1f(lightRadiusUniform, radius);	
+	glUniform3fv(lightDiffuseUniform, 1, &diffuse[0]);
+
+	glBindVertexArray(m_VAOCube);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 }
 
 void Renderer::Load()
@@ -541,7 +604,8 @@ void Renderer::Load()
 	//GenerateTexturePlaneAlt();
 
 	m_programGeometryBufferID = m_pAssetManager->GetShader("GeometryPass");
-	m_programDirectionalLightID = m_pAssetManager->GetShader("LightingPass");
+	m_programDirectionalLightID = m_pAssetManager->GetShader("DirectionalLight");
+	m_programPointLightID = m_pAssetManager->GetShader("PointLight");
 	m_programCompositeID = m_pAssetManager->GetShader("CompositePass");
 
 	m_pGeometryPassRenderTarget = new RenderTarget();
@@ -559,6 +623,14 @@ void Renderer::Load()
 	m_pLightPassRenderTarget->AttachColourBuffer(0, GL_RGB8);
 	m_pLightPassRenderTarget->SetDrawBuffers();
 
+	m_pPostProcessRenderTarget = new RenderTarget();
+	m_pPostProcessRenderTarget->SetSize(1280, 720);
+	m_pPostProcessRenderTarget->Initialise();
+	m_pPostProcessRenderTarget->AttachColourBuffer(0, GL_RGB8);
+	m_pPostProcessRenderTarget->AttachDepthBuffer();
+	m_pPostProcessRenderTarget->SetDrawBuffers();
+
+
 	//make post process stuff later
 
 	//m_pPostProcessRenderTarget = new RenderTarget();
@@ -571,6 +643,8 @@ void Renderer::Load()
 	m_targetCamera->SetUpPerspective(glm::pi<float>() * 0.25f, 16 / 9.f, 0.1f, 10000.f);*/
 
 	CreateFullScreenQuad();
+	CreateCube();
+	
 	////----------
 	//
 	////shadow maps
@@ -911,6 +985,78 @@ void Renderer::CreateFullScreenQuad()
 
 	m_VAOfullScreenQuad = m_VAO;
 
+}
+
+void Renderer::CreateCube()
+{
+	float vertexData[] = {
+		-1, -1, 1, 1,
+		1, -1, 1, 1,
+		1, -1, -1, 1,
+		-1, -1, -1, 1,
+		-1, 1, 1, 1,
+		1, 1, 1, 1,
+		1, 1, -1, 1,
+		-1, 1, -1, 1,
+	};
+
+	unsigned int indexData[] = {
+		0, 5, 4,
+		0, 1, 5,
+		1, 6, 5,
+		1, 2, 6,
+		2, 7, 6,
+		2, 3, 7,
+		3, 4, 7,
+		3, 0, 4,
+		4, 6, 7,
+		4, 5, 6,
+		3, 1, 0,
+		3, 2, 1
+	};
+
+	glGenVertexArrays(1, &m_VAO);
+	glBindVertexArray(m_VAO);
+
+	glGenBuffers(1, &m_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 4 * 8, vertexData, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6 * 6, indexData, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 4, 0);	
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	m_VAOCube = m_VAO;
+
+	/*
+	glGenVertexArrays(1, &m_VAO);
+	glBindVertexArray(m_VAO);
+
+	glGenBuffers(1, &m_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexAdv) * 4, vertexData, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_IBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, indexData, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 48);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 16);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAdv), ((char*)0) + 32);
+
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);*/
 }
 
 void Renderer::GenerateTexturePlane()

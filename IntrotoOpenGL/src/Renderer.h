@@ -36,7 +36,6 @@ public:
 	void Draw();
 	void DrawScene(BaseCamera* camera);
 	void DrawLighting(BaseCamera* camera);
-	void DrawDirectionalLight(const glm::vec3& direction, const glm::vec3& diffuse);
 
 	void Load();
 
@@ -52,7 +51,6 @@ public:
 
 	void AddEntityManager(EntityManager* entityManager);
 	void AddAssetManager(AssetManager* assetManager);
-
 	void AddCheckersManager(CheckersManager* checkersManager);
 
 private:
@@ -76,6 +74,7 @@ private:
 
 	unsigned int m_programGeometryBufferID;
 	unsigned int m_programDirectionalLightID;
+	unsigned int m_programPointLightID;
 	unsigned int m_programCompositeID;
 
 	//unsigned int m_programPostProcessID;
@@ -133,6 +132,7 @@ private:
 	RenderTarget* m_pDefferedRenderTarget;
 	RenderTarget* m_pLightingRenderTarget;
 
+
 	//Render Target Tutorial variables
 	void GenerateTexturePlaneAlt();
 	unsigned int m_VAOplane;
@@ -157,9 +157,16 @@ private:
 	//newstuff
 	RenderTarget* m_pGeometryPassRenderTarget;
 	RenderTarget* m_pLightPassRenderTarget;
+	RenderTarget* m_pPostProcessRenderTarget;
 	void DrawGeometryPass(BaseCamera* camera);
 	void DrawLightPass(BaseCamera* camera);
+	void DrawDirectionalLight(BaseCamera* camera, const glm::vec3& direction, const glm::vec3& diffuse);
+	void DrawPointLight(BaseCamera* camera, const glm::vec3& position, float radius, const glm::vec3& diffuse);
 	void DrawCompositePass(BaseCamera* camera);
+	void DrawPostProcessingPass(BaseCamera* camera);
+
+	void CreateCube();
+	unsigned int m_VAOCube;
 	
 	//Postprocess
 	//RenderTarget* m_pPostProcessRenderTarget;
@@ -187,32 +194,32 @@ private:
 	//float m_seed;
 
 	//Entity test
-	Entity* m_entityTest;
-	Entity* m_entity2Test;
+	//Entity* m_entityTest;
+	//Entity* m_entity2Test;
 
 	//ignore these
-	void CreatePostProcessFramebuffer();
-	unsigned int m_FBOPostProcess;
+	//void CreatePostProcessFramebuffer();
+	//unsigned int m_FBOPostProcess;
 
-	static void OnMouseButton(GLFWwindow*, int b, int a, int m) {
-		TwEventMouseButtonGLFW(b, a);
-	}
-	static void OnMousePosition(GLFWwindow*, double x, double y) {
-		TwEventMousePosGLFW((int)x, (int)y);
-	}
-	static void OnMouseScroll(GLFWwindow*, double x, double y) {
-		TwEventMouseWheelGLFW((int)y);
-	}
-	static void OnKey(GLFWwindow*, int k, int s, int a, int m) {
-		TwEventKeyGLFW(k, a);
-	}
-	static void OnChar(GLFWwindow*, unsigned int c) {
-		TwEventCharGLFW(c, GLFW_PRESS);
-	}
-	static void OnWindowResize(GLFWwindow*, int w, int h) {
-		TwWindowSize(w, h);
-		glViewport(0, 0, w, h);
-	}
+	//static void OnMouseButton(GLFWwindow*, int b, int a, int m) {
+	//	TwEventMouseButtonGLFW(b, a);
+	//}
+	//static void OnMousePosition(GLFWwindow*, double x, double y) {
+	//	TwEventMousePosGLFW((int)x, (int)y);
+	//}
+	//static void OnMouseScroll(GLFWwindow*, double x, double y) {
+	//	TwEventMouseWheelGLFW((int)y);
+	//}
+	//static void OnKey(GLFWwindow*, int k, int s, int a, int m) {
+	//	TwEventKeyGLFW(k, a);
+	//}
+	//static void OnChar(GLFWwindow*, unsigned int c) {
+	//	TwEventCharGLFW(c, GLFW_PRESS);
+	//}
+	//static void OnWindowResize(GLFWwindow*, int w, int h) {
+	//	TwWindowSize(w, h);
+	//	glViewport(0, 0, w, h);
+	//}
 
 };
 

@@ -75,6 +75,11 @@ void Entity::SetWorldTransform(glm::mat4 transform)
 	m_worldTransform = transform;
 }
 
+glm::mat4 Entity::GetWorldTransform()
+{
+	return m_worldTransform;
+}
+
 void Entity::TestMoveTransform(glm::mat4 transform)
 {
 	m_worldTransform = m_worldTransform * transform;

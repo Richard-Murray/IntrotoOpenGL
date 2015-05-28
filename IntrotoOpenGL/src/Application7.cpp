@@ -104,6 +104,10 @@ void Application7::Update(float deltaTime)
 	m_camera->Update(deltaTime);
 	m_entityManager->Update(deltaTime);
 	m_checkersManager->Update(deltaTime);
+
+	//glm::mat4 transform = glm::mat4(1);
+	//transform[3] = glm::vec4(4, -1, 4, 1);
+	//m_entityManager->GetEntity("Checkersboard")->SetWorldTransform(transform);
 }
 
 void Application7::Draw()
@@ -116,6 +120,11 @@ void Application7::Load()
 	m_camera = new FlyCamera(10.0f);
 	m_camera->SetInputWindow(m_window);
 	m_camera->SetUpPerspective(glm::pi<float>() * 0.25f, 16 / 9.f, 0.1f, 10000.f);
+	//m_camera->SetPosition(glm::vec3(-5, 5, 5));
+	m_camera->SetTransform(glm::mat4(0, 0, 1, 0,
+									0, 1, 0, 0,
+									-1, 0, 0, 0,
+									-5, 5, 5, 1));
 
 	m_renderer = new Renderer(m_camera, m_window);
 
@@ -123,7 +132,8 @@ void Application7::Load()
 	m_assetManager->Initialise();
 
 	m_assetManager->LoadShader("GeometryPass", "./data/shaders/deferredGbuffer.vert", "./data/shaders/deferredGbuffer.frag");
-	m_assetManager->LoadShader("LightingPass", "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
+	m_assetManager->LoadShader("DirectionalLight", "./data/shaders/deferredDirectionalLight.vert", "./data/shaders/deferredDirectionalLight.frag");
+	m_assetManager->LoadShader("PointLight", "./data/shaders/deferredPointLight.vert", "./data/shaders/deferredPointLight.frag");
 	m_assetManager->LoadShader("CompositePass", "./data/shaders/deferredComposite.vert", "./data/shaders/deferredComposite.frag");
 
 	m_assetManager->LoadModel("Cube1", "data/models/Cube.fbx");
@@ -131,13 +141,22 @@ void Application7::Load()
 
 	m_assetManager->LoadTexture("Snow", "data/textures/snow.jpg");
 	m_assetManager->LoadTexture("Rock", "data/textures/rock.jpg");
+	
+
+	m_assetManager->LoadTexture("Red", "data/textures/colour/red.png");
+	m_assetManager->LoadTexture("Blue", "data/textures/colour/blue.png");
+	m_assetManager->LoadTexture("Orange", "data/textures/colour/orange.png");
+	m_assetManager->LoadTexture("Cyan", "data/textures/colour/cyan.png");
+	m_assetManager->LoadTexture("Gold", "data/textures/colour/gold.png");
+	m_assetManager->LoadTexture("Black", "data/textures/colour/black.png");
+	m_assetManager->LoadTexture("White", "data/textures/colour/white.png");
 
 	m_entityManager = new EntityManager();
 	m_renderer->AddEntityManager(m_entityManager);
 	m_renderer->AddAssetManager(m_assetManager);
 	m_renderer->Load();
 
-	m_entityManager->CreateEntity("Test1");
+	/*m_entityManager->CreateEntity("Test1");
 	m_entityManager->GetNewEntity()->Initialise(m_assetManager);
 	m_entityManager->GetNewEntity()->AttachModel("Cube1");
 	m_entityManager->GetNewEntity()->AttachShader("GeometryPass");
@@ -145,9 +164,9 @@ void Application7::Load()
 	m_entityManager->CreateEntity("Test2");
 	m_entityManager->GetNewEntity()->Initialise(m_assetManager);
 	m_entityManager->GetNewEntity()->AttachModel("Crate1");
-	m_entityManager->GetNewEntity()->AttachShader("GeometryPass");
+	m_entityManager->GetNewEntity()->AttachShader("GeometryPass");*/
 
-	m_checkersManager = new CheckersManager(m_assetManager);
+	m_checkersManager = new CheckersManager(m_assetManager, m_window);
 	m_renderer->AddCheckersManager(m_checkersManager);
 	//m_checkersGame = new CheckersGame();
 	//m_checkerModels = new Checker[8][8]();

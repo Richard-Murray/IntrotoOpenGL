@@ -17,7 +17,7 @@ enum PLAYER { PLAYERONE, PLAYERTWO}; //player 1 is blue, player 2 is red
 class CheckersManager //exists in the application, only one exists
 {
 public:
-	CheckersManager(AssetManager* assetManager);
+	CheckersManager(AssetManager* assetManager, GLFWwindow* window);
 	~CheckersManager();
 
 	void Update(float deltaTime);
@@ -29,9 +29,14 @@ private:
 	CheckersBoard* m_checkersBoard;
 	CheckersBoard* m_clonedCheckersBoard;
 	AssetManager* m_assetManager;
+	GLFWwindow* m_window;
 	std::vector<Checker> m_checkerModels; // Checker* m_checkerModels;
+	std::vector<Entity> m_checkersboardEntities;
 
-	int m_selectedPieceRow, m_selectedPieceColumn;
+	int m_selectedMove;
+	bool m_validActionsRetrieved = false;
+	//int m_selectedPieceRow, m_selectedPieceColumn;
+	bool m_inputLastFrame = false;
 
 	float m_moveTimer = 0;
 	int m_testGameNumber = 50;
@@ -56,6 +61,7 @@ public:
 	float PlayRandomisedGame();
 	int PiecesLeftForPlayer(PLAYER player);
 	void RemoveNonJumpMoves();
+	bool CheckForJumpMoves();
 
 	std::vector<Action*> m_listOfActions;
 	PLAYER m_currentPlayer = PLAYER::PLAYERONE;
@@ -79,6 +85,7 @@ public:
 	void SetPieceLocation(int row, int col);
 	int GetPieceRow();
 	int GetPieceColumn();
+	void Select(bool isSelected);
 
 private:
 	int m_row, m_column;
