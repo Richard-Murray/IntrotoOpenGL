@@ -16,7 +16,7 @@ uniform mat4 WorldTransform;
 void main() 
 {
 	// first store view-space position and normal
-	vPosition = View * Position;
+	vPosition = View * WorldTransform * Position;
 	//vNormal = Normal;
 	vNormal = normalize(View * Normal);
 	vTexCoord = TexCoord;

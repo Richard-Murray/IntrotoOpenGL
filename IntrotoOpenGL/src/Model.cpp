@@ -24,7 +24,8 @@ void Model::LoadModel(const char* name, const char* path, Renderer* render)
 	}	
 	else
 	{
-		//error
+		printf("Error: Model already exists!\n");
+		printf("%s\n", name);
 	}
 }
 

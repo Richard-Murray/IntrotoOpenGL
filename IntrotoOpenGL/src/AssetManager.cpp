@@ -41,13 +41,14 @@ Model* AssetManager::GetModel(const char* idName)
 	}
 	else
 	{
+		printf("Error: Failed to find model!\n");
+		printf("%s\n", idName);
 		return nullptr;
 	}
 }
 
 unsigned int AssetManager::GetShader(const char* idName)
 {
-	//add check later
 	for (auto iter = m_shaderList.begin(); iter != m_shaderList.end(); iter++)
 	{
 		if ((*iter)->GetID() == idName)
@@ -55,6 +56,11 @@ unsigned int AssetManager::GetShader(const char* idName)
 			return (*iter)->GetAsset();
 		}
 	}
+
+	printf("Error: Failed to find shader!\n");
+	printf("%s\n", idName);
+
+	return 0;
 }
 
 unsigned int AssetManager::GetTexture(const char* idName)
@@ -66,6 +72,9 @@ unsigned int AssetManager::GetTexture(const char* idName)
 			return (*iter)->GetAsset();
 		}
 	}
+
+	printf("Error: Failed to find texture!\n");
+	printf("%s\n", idName);
 }
 
 bool AssetManager::DoesModelExist(const char* idName)
@@ -77,6 +86,8 @@ bool AssetManager::DoesModelExist(const char* idName)
 			return true;
 		}
 	}
+
+	
 	return false;
 }
 

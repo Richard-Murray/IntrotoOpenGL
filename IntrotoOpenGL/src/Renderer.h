@@ -12,7 +12,7 @@
 #include <stb_image.h>
 #include "tiny_obj_loader.h"
 #include "FBXFile.h"
-#include "AntTweakBar.h"
+//#include "AntTweakBar.h"
 
 #include "Particles.h"
 #include "MeshArray.h"

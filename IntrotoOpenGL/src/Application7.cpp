@@ -140,8 +140,7 @@ void Application7::Load()
 	m_assetManager->LoadModel("Crate1", "data/models/Crate.fbx");
 
 	m_assetManager->LoadTexture("Snow", "data/textures/snow.jpg");
-	m_assetManager->LoadTexture("Rock", "data/textures/rock.jpg");
-	
+	m_assetManager->LoadTexture("Rock", "data/textures/rock.jpg");	
 
 	m_assetManager->LoadTexture("Red", "data/textures/colour/red.png");
 	m_assetManager->LoadTexture("Blue", "data/textures/colour/blue.png");

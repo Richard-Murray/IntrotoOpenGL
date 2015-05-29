@@ -405,28 +405,8 @@ void Renderer::DrawGeometryPass(BaseCamera* camera)
 	m_pEntityManager->Draw(camera);
 	m_pCheckersManager->Draw(camera);
 
-	glUseProgram(m_programGeometryBufferID);
+	
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_pAssetManager->GetTexture("Snow"));
-
-	unsigned int projectionViewUniform = glGetUniformLocation(m_programGeometryBufferID, "ProjectionView");
-	unsigned int viewUniform = glGetUniformLocation(m_programGeometryBufferID, "View");
-	unsigned int worldTransformUniform = glGetUniformLocation(m_programGeometryBufferID, "WorldTransform");
-	unsigned int diffuseUniform = glGetUniformLocation(m_programGeometryBufferID, "Diffuse");
-
-	mat4 transform = mat4(1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		1, 1, 1, 1);
-
-	glUniformMatrix4fv(viewUniform, 1, GL_FALSE, &(camera->GetView()[0][0]));
-	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
-	glUniformMatrix4fv(worldTransformUniform, 1, GL_FALSE, &(transform[0][0]));
-	glUniform1i(diffuseUniform, 0);
-
-	glBindVertexArray(m_VAOCube);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
 	//m_entityTest->Draw(camera);
 	//m_entity2Test->Draw(camera);
@@ -459,9 +439,10 @@ void Renderer::DrawLightPass(BaseCamera* camera)
 
 	//Point Lights
 	glUseProgram(m_programPointLightID);
-
+	
 	positionTextureUniform = glGetUniformLocation(m_programPointLightID, "positionTexture");
 	normalTextureUniform = glGetUniformLocation(m_programPointLightID, "normalTexture");
+	unsigned int projectionViewUniform = glGetUniformLocation(m_programPointLightID, "ProjectionView");
 
 	glUniform1i(positionTextureUniform, 0);
 	glActiveTexture(GL_TEXTURE0);
@@ -471,10 +452,13 @@ void Renderer::DrawLightPass(BaseCamera* camera)
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_pGeometryPassRenderTarget->GetRenderTexture(2));
 
+	glUniformMatrix4fv(projectionViewUniform, 1, GL_FALSE, &(camera->GetProjectionView()[0][0]));
+
 	glCullFace(GL_FRONT);
 
-	DrawPointLight(camera, vec3(sinf(glfwGetTime()) * 5, 3, cosf(glfwGetTime()) * 5), 5, vec3(1, 0, 0));
-	DrawPointLight(camera, vec3(2, 1, 2), 500, vec3(1, 0, 0));
+	//DrawPointLight(camera, vec3(sinf(glfwGetTime()) * 5, 3, cosf(glfwGetTime()) * 5), 5, vec3(1, 0, 0));
+	DrawPointLight(camera, vec3(0, 1, 4.4), 10, vec3(0, 0, 1));
+	DrawPointLight(camera, vec3(8.8, 1, 4.4), 10, vec3(1, 0, 0));
 
 	glCullFace(GL_BACK);
 
@@ -504,7 +488,7 @@ void Renderer::DrawCompositePass(BaseCamera* camera)
 
 void Renderer::DrawDirectionalLight(BaseCamera* camera, const glm::vec3& direction, const glm::vec3& diffuse)
 {
-	glm::vec4 viewSpaceLight = m_camera->GetView() *glm::vec4(glm::normalize(direction), 0);
+	glm::vec4 viewSpaceLight = camera->GetView() * glm::vec4(glm::normalize(direction), 0);
 
 	unsigned int lightDirectionUniform = glGetUniformLocation(m_programDirectionalLightID, "lightDirection");
 	unsigned int lightDiffuseUniform = glGetUniformLocation(m_programDirectionalLightID, "lightDiffuse");
@@ -531,7 +515,8 @@ void Renderer::DrawPointLight(BaseCamera* camera, const glm::vec3& position, flo
 	glUniform3fv(lightDiffuseUniform, 1, &diffuse[0]);
 
 	glBindVertexArray(m_VAOCube);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+
 }
 
 void Renderer::Load()

@@ -184,7 +184,7 @@ void CheckersManager::Update(float deltaTime)
 	if (m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
 	{
 		m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
-		if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+		if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 0.1f && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
 		{
 			m_checkersBoard->RemoveNonJumpMoves();
 			for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
