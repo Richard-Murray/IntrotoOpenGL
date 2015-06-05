@@ -39,7 +39,7 @@ private:
 	bool m_inputLastFrame = false;
 
 	float m_moveTimer = 0;
-	int m_testGameNumber = 50;
+	int m_testGameNumber = 100;
 	//PLAYER m_currentPlayer = PLAYER::PLAYERONE;
 };
 

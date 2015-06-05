@@ -241,8 +241,8 @@ void CheckersManager::Update(float deltaTime)
 						(*iter)->m_score += m_clonedCheckersBoard->PlayRandomisedGame();
 					}
 
-					if (movesIntoCheck == true)
-						(*iter)->m_score -= 25;
+					if (movesIntoCheck == true && (*iter)->m_isJump == false)
+						(*iter)->m_score -= 70;
 				}
 
 				chosenAction = m_checkersBoard->m_listOfActions[0];
