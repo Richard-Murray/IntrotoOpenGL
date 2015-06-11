@@ -142,15 +142,31 @@ void CheckersManager::Update(float deltaTime)
 			if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS && m_inputLastFrame == false)
 			{
 				m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[m_selectedMove]);
-				m_moveTimer = 0;
-				m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
-				m_validActionsRetrieved = false;
+				//ADDITION
+				if (m_checkersBoard->m_listOfActions[m_selectedMove]->m_isJump == true)
+				{
+					m_checkersBoard->GetValidJumpActions(PLAYER::PLAYERONE,
+						m_checkersBoard->m_listOfActions[m_selectedMove]->m_endRow,
+						m_checkersBoard->m_listOfActions[m_selectedMove]->m_endCol);
+					m_selectedMove = 0;					
+				}
+				if (m_checkersBoard->m_listOfActions.size() < 1 || m_checkersBoard->m_listOfActions[m_selectedMove]->m_isJump == false)
+				{
+					m_moveTimer = 0;
+					m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+					m_validActionsRetrieved = false;
+				}
 				m_inputLastFrame = true;
 			}
 			if (m_inputLastFrame == true && !((glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS) || (glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS) || (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)))
 			{
 				m_inputLastFrame = false;
 			}
+		}
+		else
+		{
+			m_checkersBoard->m_currentPlayer = PLAYER::PLAYERTWO;
+			m_validActionsRetrieved = false;
 		}
 		
 		//if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 1)
@@ -183,50 +199,82 @@ void CheckersManager::Update(float deltaTime)
 	//AI controlled side
 	if (m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
 	{
-		m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
-		if (m_checkersBoard->m_listOfActions.size() > 0 && m_moveTimer >= 0.1f && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+		bool noMoreMoves = false;
+		bool jumpMoveReady = false;
+		Action* chosenAction = nullptr;
+		while (noMoreMoves == false)
 		{
-			m_checkersBoard->RemoveNonJumpMoves();
-			for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+			
+			
+			if (jumpMoveReady == false)
 			{
-				m_clonedCheckersBoard->Copy(m_checkersBoard);
-				m_clonedCheckersBoard->ApplyAction((*iter));
-				m_clonedCheckersBoard->GetValidActions(PLAYER::PLAYERONE); //Purely to check if a piece moves into check
-				bool movesIntoCheck = false;
-				if (m_clonedCheckersBoard->CheckForJumpMoves() == true)
-				{
-					movesIntoCheck = true;
-				}
-				m_clonedCheckersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-				for (int i = 0; i < m_testGameNumber; i++)
-				{
-					(*iter)->m_score += m_clonedCheckersBoard->PlayRandomisedGame();
-				}
-
-				if (movesIntoCheck == true)
-					(*iter)->m_score -= 25;
+				m_checkersBoard->GetValidActions(PLAYER::PLAYERTWO);
+				jumpMoveReady = true;
+			}
+			else if (chosenAction->m_isJump == true)
+			{
+				m_checkersBoard->GetValidJumpActions(PLAYER::PLAYERTWO, chosenAction->m_endRow, chosenAction->m_endCol);
+			}
+			else
+			{
+				m_checkersBoard->m_listOfActions.clear();
 			}
 
-			Action* chosenAction = m_checkersBoard->m_listOfActions[0];
-			for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+			if (m_checkersBoard->m_listOfActions.size() > 0 /*&& m_moveTimer >= 0.1f*/ && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
 			{
-				if ((*iter)->m_score > chosenAction->m_score)
+				m_checkersBoard->RemoveNonJumpMoves();
+				for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
 				{
-					chosenAction = (*iter);
+					m_clonedCheckersBoard->Copy(m_checkersBoard);
+					m_clonedCheckersBoard->ApplyAction((*iter));
+					m_clonedCheckersBoard->PromoteKings();
+					m_clonedCheckersBoard->SetLastAction((*iter));
+					m_clonedCheckersBoard->GetValidActions(PLAYER::PLAYERONE); //Purely to check if a piece moves into check
+					bool movesIntoCheck = false;
+					if (m_clonedCheckersBoard->CheckForJumpMoves() == true)
+					{
+						movesIntoCheck = true;
+					}
+					m_clonedCheckersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+					for (int i = 0; i < m_testGameNumber; i++)
+					{
+						(*iter)->m_score += m_clonedCheckersBoard->PlayRandomisedGame();
+					}
+
+					if (movesIntoCheck == true && (*iter)->m_isJump == false)
+						(*iter)->m_score -= 70;
 				}
+
+				chosenAction = m_checkersBoard->m_listOfActions[0];
+				for (auto iter = m_checkersBoard->m_listOfActions.begin(); iter < m_checkersBoard->m_listOfActions.end(); iter++)
+				{
+					if ((*iter)->m_score > chosenAction->m_score)
+					{
+						chosenAction = (*iter);
+					}
+				}
+
+				m_checkersBoard->ApplyAction(chosenAction);
+				m_checkersBoard->PromoteKings();
+
+
+				//m_checkersBoard->GetValidJumpActions(PLAYER::PLAYERTWO, chosenAction->m_endRow, chosenAction->m_endCol);
+				//here
+				//m_moveTimer = 0;
+
+				//m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
+				
+				
+				//m_moveTimer = 0;
+				//m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
 			}
-
-			m_checkersBoard->ApplyAction(chosenAction);
-			m_moveTimer = 0;
-
-			//m_checkersBoard->ApplyAction(m_checkersBoard->m_listOfActions[rand() % m_checkersBoard->m_listOfActions.size()]);
-			//m_moveTimer = 0;
-			m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-		}
-		else if (m_checkersBoard->m_listOfActions.size() == 0 && m_moveTimer >= 1 && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
-		{
-			m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
-			//loses because there's no more moves
+			else if (m_checkersBoard->m_listOfActions.size() == 0 /*&& m_moveTimer >= 1*/ && m_checkersBoard->m_currentPlayer == PLAYER::PLAYERTWO)
+			{
+				m_moveTimer = 0;
+				m_checkersBoard->m_currentPlayer = PLAYER::PLAYERONE;
+				noMoreMoves = true;
+				//loses because there's no more moves
+			}
 		}
 	}
 
@@ -514,6 +562,104 @@ void CheckersBoard::GetValidActions(PLAYER player)
 	}
 }
 
+void CheckersBoard::GetValidJumpActions(PLAYER player, int row, int col)
+{
+	m_listOfActions.clear();
+
+	if (player == PLAYER::PLAYERONE && ((GetPieceValue(row, col) == BOARD::BLUEPIECE) || (GetPieceValue(row, col) == BOARD::BLUEKING)))
+	{
+		//check top right
+		if (GetPieceValue(row + 1, col + 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col + 1) == BOARD::REDKING)
+		{
+			if (row + 2 < 8 && col + 2 < 8 && GetPieceValue(row + 2, col + 2) == BOARD::NONE)
+			{
+				m_listOfActions.push_back(new Action());
+				m_listOfActions.back()->SetJumpMove(row, col, row + 2, col + 2, player, GetPieceValue(row, col), row + 1, col + 1);
+			}
+		}
+
+		//check top left
+		if (GetPieceValue(row + 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row + 1, col - 1) == BOARD::REDKING)
+		{
+			if (row + 2 < 8 && col - 2 >= 0 && GetPieceValue(row + 2, col - 2) == BOARD::NONE)
+			{
+				m_listOfActions.push_back(new Action());
+				m_listOfActions.back()->SetJumpMove(row, col, row + 2, col - 2, player, GetPieceValue(row, col), row + 1, col - 1);
+			}
+		}
+		
+		if ((GetPieceValue(row, col) == BOARD::BLUEKING))
+		{
+			//check bottom right (king)
+			if (GetPieceValue(row - 1, col + 1) == BOARD::REDPIECE || GetPieceValue(row - 1, col + 1) == BOARD::REDKING)
+			{
+				if (row - 2 >= 0 && col + 2 < 8 && GetPieceValue(row - 2, col + 2) == BOARD::NONE)
+				{
+					m_listOfActions.push_back(new Action());
+					m_listOfActions.back()->SetJumpMove(row, col, row - 2, col + 2, player, GetPieceValue(row, col), row - 1, col + 1);
+				}
+			}
+			
+			//check bottom left (king)
+			if (GetPieceValue(row - 1, col - 1) == BOARD::REDPIECE || GetPieceValue(row - 1, col - 1) == BOARD::REDKING)
+			{
+				if (row - 2 >= 0 && col - 2 >= 0 && GetPieceValue(row - 2, col - 2) == BOARD::NONE)
+				{
+					m_listOfActions.push_back(new Action());
+					m_listOfActions.back()->SetJumpMove(row, col, row - 2, col - 2, player, GetPieceValue(row, col), row - 1, col - 1);
+				}
+			}
+		}
+	}
+
+	if (player == PLAYER::PLAYERTWO && ((GetPieceValue(row, col) == BOARD::REDPIECE) || (GetPieceValue(row, col) == BOARD::REDKING)))
+	{
+
+		//check bottom right
+		if (GetPieceValue(row - 1, col + 1) == BOARD::BLUEPIECE || GetPieceValue(row - 1, col + 1) == BOARD::BLUEKING)
+		{
+			if (row - 2 >= 0 && col + 2 < 8 && GetPieceValue(row - 2, col + 2) == BOARD::NONE)
+			{
+				m_listOfActions.push_back(new Action());
+				m_listOfActions.back()->SetJumpMove(row, col, row - 2, col + 2, player, GetPieceValue(row, col), row - 1, col + 1);
+			}
+		}
+
+		//check bottom left
+		if (GetPieceValue(row - 1, col - 1) == BOARD::BLUEPIECE || GetPieceValue(row - 1, col - 1) == BOARD::BLUEKING)
+		{
+			if (row - 2 >= 0 && col - 2 >= 0 && GetPieceValue(row - 2, col - 2) == BOARD::NONE)
+			{
+				m_listOfActions.push_back(new Action());
+				m_listOfActions.back()->SetJumpMove(row, col, row - 2, col - 2, player, GetPieceValue(row, col), row - 1, col - 1);
+			}
+		}
+
+		if ((GetPieceValue(row, col) == BOARD::REDKING))
+		{
+			//check top right
+			if (GetPieceValue(row + 1, col + 1) == BOARD::BLUEPIECE || GetPieceValue(row + 1, col + 1) == BOARD::BLUEKING)
+			{
+				if (row + 2 < 8 && col + 2 < 8 && GetPieceValue(row + 2, col + 2) == BOARD::NONE)
+				{
+					m_listOfActions.push_back(new Action());
+					m_listOfActions.back()->SetJumpMove(row, col, row + 2, col + 2, player, GetPieceValue(row, col), row + 1, col + 1);
+				}
+			}
+
+			//check top left
+			if (GetPieceValue(row + 1, col - 1) == BOARD::BLUEPIECE || GetPieceValue(row + 1, col - 1) == BOARD::BLUEKING)
+			{
+				if (row + 2 < 8 && col - 2 >= 0 && GetPieceValue(row + 2, col - 2) == BOARD::NONE)
+				{
+					m_listOfActions.push_back(new Action());
+					m_listOfActions.back()->SetJumpMove(row, col, row + 2, col - 2, player, GetPieceValue(row, col), row + 1, col - 1);
+				}
+			}
+		}
+	}
+}
+
 void CheckersBoard::ApplyAction(Action* action)
 {
 	if (!action->m_isJump)
@@ -597,6 +743,17 @@ float CheckersBoard::PlayRandomisedGame()
 	int initialBluePieces = PiecesLeftForPlayer(PLAYER::PLAYERONE);
 	int initialRedPieces = PiecesLeftForPlayer(PLAYER::PLAYERTWO);
 
+	//Finish chained jump moves randomly
+	int lastJump = rand() % m_listOfActions.size();
+	GetValidJumpActions(PLAYER::PLAYERTWO, m_listOfActions[lastJump]->m_endRow, m_listOfActions[lastJump]->m_endCol);
+	while (m_listOfActions.size() != 0)
+	{
+		lastJump = rand() % m_listOfActions.size();
+		ApplyAction(m_listOfActions[lastJump]);
+		PromoteKings();
+		GetValidJumpActions(PLAYER::PLAYERTWO, m_listOfActions[lastJump]->m_endRow, m_listOfActions[lastJump]->m_endCol);
+	}
+
 	while (exitRandomGame == false)
 	{
 
@@ -606,7 +763,17 @@ float CheckersBoard::PlayRandomisedGame()
 		if (m_listOfActions.size() > 0  && m_currentPlayer == PLAYER::PLAYERONE)
 		{
 			RemoveNonJumpMoves();
-			ApplyAction(m_listOfActions[rand() % m_listOfActions.size()]);
+			int chosenAction = rand() % m_listOfActions.size();
+			ApplyAction(m_listOfActions[chosenAction]);
+			PromoteKings();
+			GetValidJumpActions(PLAYER::PLAYERONE, m_listOfActions[chosenAction]->m_endRow, m_listOfActions[chosenAction]->m_endCol);
+			while (m_listOfActions.size() != 0)
+			{				
+				chosenAction = rand() % m_listOfActions.size();
+				ApplyAction(m_listOfActions[chosenAction]);
+				PromoteKings();
+				GetValidJumpActions(PLAYER::PLAYERONE, m_listOfActions[chosenAction]->m_endRow, m_listOfActions[chosenAction]->m_endCol);
+			}
 			m_currentPlayer = PLAYER::PLAYERTWO;
 		}
 		else if (m_currentPlayer == PLAYER::PLAYERONE)
@@ -627,7 +794,17 @@ float CheckersBoard::PlayRandomisedGame()
 		if (m_listOfActions.size() > 0 && m_currentPlayer == PLAYER::PLAYERTWO)
 		{
 			RemoveNonJumpMoves();
-			ApplyAction(m_listOfActions[rand() % m_listOfActions.size()]);
+			int chosenAction = rand() % m_listOfActions.size();
+			ApplyAction(m_listOfActions[chosenAction]);
+			PromoteKings();
+			GetValidJumpActions(PLAYER::PLAYERTWO, m_listOfActions[chosenAction]->m_endRow, m_listOfActions[chosenAction]->m_endCol);
+			while (m_listOfActions.size() != 0)
+			{				
+				chosenAction = rand() % m_listOfActions.size();
+				ApplyAction(m_listOfActions[chosenAction]);
+				PromoteKings();
+				GetValidJumpActions(PLAYER::PLAYERTWO, m_listOfActions[chosenAction]->m_endRow, m_listOfActions[chosenAction]->m_endCol);
+			}
 			m_currentPlayer = PLAYER::PLAYERONE;
 		}
 		else if (m_currentPlayer == PLAYER::PLAYERTWO)
@@ -697,14 +874,14 @@ int CheckersBoard::PiecesLeftForPlayer(PLAYER player)
 		{
 			if (player == PLAYER::PLAYERONE)
 			{
-				if (GetPieceValue(row, col) == (BOARD::BLUEPIECE || BOARD::BLUEKING))
+				if (GetPieceValue(row, col) == BOARD::BLUEPIECE || GetPieceValue(row, col) == BOARD::BLUEKING)
 				{
 					pieceLeft++;
 				}
 			}
 			if (player == PLAYER::PLAYERTWO)
 			{
-				if (GetPieceValue(row, col) == (BOARD::REDPIECE || BOARD::REDKING))
+				if (GetPieceValue(row, col) == BOARD::REDPIECE || GetPieceValue(row, col) == BOARD::REDKING)
 				{
 					pieceLeft++;
 				}

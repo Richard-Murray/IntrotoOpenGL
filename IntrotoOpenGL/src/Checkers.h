@@ -39,7 +39,7 @@ private:
 	bool m_inputLastFrame = false;
 
 	float m_moveTimer = 0;
-	int m_testGameNumber = 50;
+	int m_testGameNumber = 100;
 	//PLAYER m_currentPlayer = PLAYER::PLAYERONE;
 };
 
@@ -50,7 +50,9 @@ public:
 	~CheckersBoard();
 
 	void GetValidActions(PLAYER player);
+	void GetValidJumpActions(PLAYER player, int row, int col);
 	void ApplyAction(Action* action);
+	void SetLastAction(Action* action) { m_lastAction = action; };
 
 	BOARD GetPieceValue(int row, int col);
 	void SetPieceValue(int row, int col, BOARD checkerType);
@@ -70,6 +72,7 @@ public:
 	CheckersBoard* m_parentCheckersBoard;
 
 private:
+	Action* m_lastAction;
 	
 };
 

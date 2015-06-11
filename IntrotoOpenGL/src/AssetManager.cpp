@@ -188,6 +188,12 @@ void AssetManager::LoadTexture(const char* idName, const char* path)
 
 	unsigned char* data = stbi_load(path, &imageWidth, &imageHeight, &imageFormat, STBI_default);
 
+	if (data == nullptr)
+	{
+		printf("Error: Failed to load texture!\n");
+		printf("%s\n", idName);
+	}
+
 	unsigned int texture;
 
 	glGenTextures(1, &texture);
